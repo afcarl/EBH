@@ -3,9 +3,11 @@ import numpy as np
 from EBH import projectroot
 
 
-def _extract_line(l):
-    t = np.datetime64(l[:23].replace(" ", "T"))
-    a = np.array(l[52:-1].split(" "), dtype=int)
+def _extract_line(line):
+    # noinspection PyUnresolvedReferences
+    line = line.strip()
+    t = np.datetime64("T".join(line.split(" ")[:2]))
+    a = np.array(line.split(" GRDATA ")[-1].split(" ")[-3:], dtype=int)
     return t, a
 
 
@@ -36,13 +38,6 @@ def extract_data(filepath, dumppath=None):
         raccel.dump(dumppath + "sample_raccel.npa")
 
     return ltime, laccel, rtime, raccel
-
-
-def load_data(setname="sample"):
-    pfx = f"{projectroot}npaz/{setname}_"
-    lX, lY = np.load(pfx + "ltime.npa"), np.load(pfx + "laccel.npa")
-    rX, rY = np.load(pfx + "rtime.npa"), np.load(pfx + "raccel.npa")
-    return lX, lY, rX, rY
 
 
 if __name__ == '__main__':
