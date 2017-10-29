@@ -46,8 +46,8 @@ def plot_peaks(time, data, thresh, ax=None, title=None):
 def main():
     import os
     for file in sorted(os.listdir(logroot)):
-        fig, (tax, bax) = plt.subplots(2, 1, sharex="all", figsize=(20, 10))
         dw = DataWrapper(logroot + file)
+        fig, (tax, bax) = plt.subplots(2, 1, sharex="all", figsize=(20, 10))
         print("DOING", dw.ID)
         plot_peaks(*dw.left, thresh=75, ax=tax, title="LEFT")
         plot_peaks(*dw.right, thresh=75, ax=bax, title="RIGHT")
