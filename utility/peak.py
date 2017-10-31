@@ -22,14 +22,17 @@ def find_peaks(data, threshold=75, center=True):
             peaks.append(peak)
             peak = []
             inpeak = False
-    print("PEAK distances: ", end="")
-    for p0, p1 in zip(peaks[:-1], peaks[1:]):
-        print(p1[0] - p0[-1], end=", ")
 
-    print()
     if not center:
         return np.array([[p[0], p[-1]] for p in peaks])
     return np.array([p[0] + np.argmax(highpass[p[0]:p[-1]+1]) for p in peaks])
+
+
+def find_peaks_subtract(dw, threshold=50, center=True):
+    left = dw.get_data("left", norm=True)[-1] - dw.get_data("right", norm=True)[-1]
+    top = find_peaks(left, threshold, center)
+    bot = find_peaks(-left, threshold, center)
+    return top, bot
 
 
 def extract_peaks(peakargs, data, proxy=5):

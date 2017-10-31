@@ -1,48 +1,37 @@
-import matplotlib.pyplot as plt
 import cv2
+import matplotlib.pyplot as plt
 
 from utility.frame import DataWrapper
-from utility.peak import find_peaks
 
 from EBH import vidroot
 
 
-class Peak:
+class Session:
 
-    def __init__(self, time, data, videosource, offset=0):
-        self.time = time
-        self.data = data
-        self.vsource = videosource
+    def __init__(self, datasource, offset=0, ythresh=50, peaksize=10):
+        self.dw = DataWrapper(datasource)
+        self.vsource = f"{vidroot}{self.dw.ID}.mp4"
         self.offset = offset
-        self.annotation = None
+        self.threshold = ythresh
+        self.peaksize = peaksize
 
-    def annotate(self):
+    def reread_params(self):
+
+
+    def peak_replay(self, side):
+        # noinspection PyArgumentList
         vdev = cv2.VideoCapture(self.vsource)
         vdev.set(cv2.CAP_PROP_POS_MSEC, self.offset)
         plt.ion()
         fig, axarr = plt.subplots(2, 1)
-        axarr[1].plot(self.time, self.data)
-        xobj, = axarr[1].plot(self.time[0], self.data[0], "rx")
+        time, data = self.dw.get_data(side, norm=True)
+        axarr[1].plot(time, data)
+        xobj, = axarr[1].plot(time[0], data[0], "rx")
         vobj = axarr[0].imshow(vdev.read()[-1])
-        for time, data in zip(self.time, self.data):
+        for time, data in zip(time, data):
             vdev.set(cv2.CAP_PROP_POS_MSEC, time+self.offset)
             success, frame = vdev.read()
             xobj.set_data(time, data)
             vobj.set_data(frame[:, :, ::-1])
             plt.pause(0.1)
         plt.close()
-        self.annotation = "JHU".index(input("J/H/U > "))
-
-
-TARGET = "Bela_fel"
-
-dw = DataWrapper(TARGET)
-
-ltime, ldata = dw.left
-
-lpeakarg = find_peaks(ldata, center=False)
-
-for s, e in lpeakarg:
-    X, Y = ltime[s-5:e+5], plt.np.linalg.norm(ldata[s-5:e+5], axis=1)
-    peak = Peak(X, Y, vidroot + TARGET + ".mp4", offset=2550)
-    peak.annotate()

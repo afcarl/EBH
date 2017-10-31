@@ -40,5 +40,13 @@ def extract_data(filepath, dumppath=None):
     return ltime, laccel, rtime, raccel
 
 
+def pull_annotation(filepath):
+    with open(filepath) as handle:
+        sides = handle.read().split("\n")[:2]
+    left = np.array([int(l) for l in sides[0].split(" ")[-1] if l != "0"], dtype="uint8")
+    right = np.array([int(l) for l in sides[1].split(" ")[-1] if l != "0"], dtype="uint8")
+    return left, right
+
+
 if __name__ == '__main__':
     extract_data(projectroot + "logz/sample.txt", dumppath=projectroot + "npaz/")
