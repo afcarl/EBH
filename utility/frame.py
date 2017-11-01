@@ -20,9 +20,9 @@ class DataWrapper:
         else:
             # Assume source is ID
             self.ID = source
-            data = extract_data(logroot + f"{source}.txt")
+            data = extract_data(logroot + "{}.txt".format(source))
         N = len(data[0])
-        labpath = f"{labroot}{self.ID}.txt"
+        labpath = "{}{}.txt".format(labroot, self.ID)
         if os.path.exists(labpath):
             a = pull_annotation(labpath)
         else:

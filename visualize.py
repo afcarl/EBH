@@ -14,7 +14,7 @@ def plot_acceleration(dw, show=True, dumppath=None):
     ltime, ldata, rtime, rdata = dw.data
     fig, axarr = plt.subplots(2, 2, figsize=(20, 10))
     for i, (lcol, rcol, ax) in enumerate(zip(ldata.T, rdata.T, axarr.flat[:3]), start=1):
-        ax.set_title(f"Axis {i}")
+        ax.set_title("Axis {}".format(i))
         ax.plot(ltime, lcol)
         ax.plot(rtime, rcol)
         ax.grid()
@@ -74,7 +74,9 @@ def plot_peaks_twoway(time, data, thresh, ax=None, title="", annot=None):
     return ax
 
 
-def plot_peaks_subtract(dw, thresh, filtersize=3):
+def plot_peaks_subtract(dw, thresh, thresh2=None, filtersize=3):
+    if thresh2 is None:
+        thresh2 = thresh
     time, nl = dw.get_data("left", norm=True)
     nr = dw.get_data("right", norm=True)[-1]
     left, right = nl - nr, nr - nl
@@ -82,12 +84,12 @@ def plot_peaks_subtract(dw, thresh, filtersize=3):
         lY, rY = average_filter(left, filtersize), average_filter(right, filtersize)
         _, (tx, bx) = plt.subplots(2, 1, sharex=True)
         plot_peaks_twoway(time, left, thresh, ax=tx, title="UNFILT")
-        plot_peaks_twoway(time, lY, thresh, ax=bx, title=f"FILT ({filtersize})", annot=dw.annot)
+        plot_peaks_twoway(time, lY, thresh2, ax=bx, title="FILT ({})".format(filtersize), annot=dw.annot)
     else:
         fleft, fright = left, right
         _, (tx, bx) = plt.subplots(2, 1, sharex=True)
         plot_peaks(time, fleft, thresh, tx, annot=dw.get_annotations("left"), title="LEFT")
-        plot_peaks(time, fright, thresh, bx, annot=dw.get_annotations("right"), title="RIGHT")
+        plot_peaks(time, fright, thresh2, bx, annot=dw.get_annotations("right"), title="RIGHT")
     plt.suptitle(dw.ID)
     plt.show()
 

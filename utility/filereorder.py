@@ -14,8 +14,8 @@ for dirnm in os.listdir(rawroot):
     vid = [flnm for flnm in os.listdir(".") if "mp4" == flnm[-3:]][0]
     txt = [flnm for flnm in os.listdir(".") if "txt" == flnm[-3:]][0]
 
-    viddest = vidroot + f"{ID}.mp4"
-    txtdest = logroot + f"{ID}.txt"
+    viddest = vidroot + "{}.mp4".format(ID)
+    txtdest = logroot + "{}.txt".format(ID)
 
     IDz[ID] = (txtdest, viddest)
 
