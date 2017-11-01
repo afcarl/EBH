@@ -21,12 +21,13 @@ class DataWrapper:
             # Assume source is ID
             self.ID = source
             data = extract_data(logroot + f"{source}.txt")
+        N = len(data[0])
         labpath = f"{labroot}{self.ID}.txt"
         if os.path.exists(labpath):
             a = pull_annotation(labpath)
-            self.annot = {"l": a[0], "r": a[1], 0: a[0], 1: a[1]}
         else:
-            self.annot = None
+            a = [[None for _ in range(N)], [None for _ in range(N)]]
+        self.annot = {"l": a[0], "r": a[1], 0: a[0], 1: a[1]}
         self.data = {"l": data[:2], "r": data[2:]}
 
     def get_data(self, side=None, norm=False):
