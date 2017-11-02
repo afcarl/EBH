@@ -1,13 +1,9 @@
-import os
-
 import numpy as np
 from matplotlib import pyplot as plt
 
 from utility.peak import find_peaks
 from utility.frame import DataWrapper
 from utility.operation import average_filter
-
-from EBH import logroot
 
 
 def plot_acceleration(dw, show=True, dumppath=None):
@@ -35,8 +31,10 @@ def plot_acceleration(dw, show=True, dumppath=None):
 
 
 def annotate_peaks(tpeaks, dpeaks, annot, ax):
-    Y = np.linalg.norm(dpeaks, axis=1) if dpeaks.ndim > 1 else tpeaks
-    labels = ["clap", "jab", "hook", "ucut"]
+    if annot is None:
+        return
+    Y = np.linalg.norm(dpeaks, axis=1) if dpeaks.ndim > 1 else dpeaks
+    labels = ("?", "clap", "jab", "ucut", "hook")
     for x, y, a in zip(tpeaks, Y, annot):
         ax.annotate(labels[a], xy=(x, y))
 
@@ -56,17 +54,18 @@ def plot_peaks(time, data, thresh, ax=None, title="", annot=None):
     return ax
 
 
-def plot_peaks_twoway(time, data, thresh, ax=None, title="", annot=None):
+def plot_peaks_twoway(time, data, threshtop, threshbot=None, ax=None, title="", annot=None):
     ax = plt.gca() if ax is None else ax
+    threshbot = threshtop if threshbot is None else threshbot
     Y = np.linalg.norm(data, axis=1) if data.ndim > 1 else data
-    tpeaks = find_peaks(Y, threshold=thresh)
-    bpeaks = find_peaks(-Y, threshold=thresh)
+    tpeaks = find_peaks(Y, threshold=threshtop)
+    bpeaks = find_peaks(-Y, threshold=threshbot)
     ax.plot(time, Y)
     ax.plot(time[tpeaks], Y[tpeaks], "rx")
     ax.plot(time[bpeaks], Y[bpeaks], "rx")
-    ax.plot(time, np.ones_like(time)*thresh, "r--")
-    ax.plot(time, np.ones_like(time)*-thresh, "r--")
-    if annot is not None:
+    ax.plot(time, np.ones_like(time) * threshtop, "r--")
+    ax.plot(time, np.ones_like(time) * -threshbot, "r--")
+    if annot:
         annotate_peaks(time[tpeaks], Y[tpeaks], annot[0], ax=ax)
         annotate_peaks(time[bpeaks], Y[bpeaks], annot[1], ax=ax)
     ax.set_title(title)
@@ -74,22 +73,20 @@ def plot_peaks_twoway(time, data, thresh, ax=None, title="", annot=None):
     return ax
 
 
-def plot_peaks_subtract(dw, thresh, thresh2=None, filtersize=3):
-    if thresh2 is None:
-        thresh2 = thresh
+# noinspection PyTypeChecker
+def plot_peaks_subtract(dw, threshtop, threshbot=None, filtersize=3):
+    if threshbot is None:
+        threshbot = threshtop
     time, nl = dw.get_data("left", norm=True)
     nr = dw.get_data("right", norm=True)[-1]
     left, right = nl - nr, nr - nl
-    if filtersize:
+    if filtersize > 1:
         lY, rY = average_filter(left, filtersize), average_filter(right, filtersize)
-        _, (tx, bx) = plt.subplots(2, 1, sharex=True)
-        plot_peaks_twoway(time, left, thresh, ax=tx, title="UNFILT")
-        plot_peaks_twoway(time, lY, thresh2, ax=bx, title="FILT ({})".format(filtersize), annot=dw.annot)
     else:
-        fleft, fright = left, right
-        _, (tx, bx) = plt.subplots(2, 1, sharex=True)
-        plot_peaks(time, fleft, thresh, tx, annot=dw.get_annotations("left"), title="LEFT")
-        plot_peaks(time, fright, thresh2, bx, annot=dw.get_annotations("right"), title="RIGHT")
+        lY, rY = left, right
+    _, (tx, bx) = plt.subplots(2, 1, sharex=True)
+    plot_peaks_twoway(time, left, threshtop, threshbot, ax=tx, title="UNFILT")
+    plot_peaks_twoway(time, lY, threshtop, threshbot, ax=bx, title="FILT ({})".format(filtersize), annot=dw.annot)
     plt.suptitle(dw.ID)
     plt.show()
 
@@ -108,20 +105,7 @@ def plot_peaks_fft(time, data):
     plt.show()
 
 
-def main():
-    for file in sorted(os.listdir(logroot)):
-        dw = DataWrapper(logroot + file)
-        fig, (tax, bax) = plt.subplots(2, 1, sharex="all", figsize=(20, 10))
-        print("DOING", dw.ID)
-        X = np.arange(len(dw.left[-1]))
-        plot_peaks(X, dw.left[-1], thresh=70, ax=tax, title="LEFT")
-        plot_peaks(X, dw.right[-1], thresh=70, ax=bax, title="RIGHT")
-        plt.tight_layout()
-        plt.suptitle(dw.ID, horizontalalignment="left")
-        plt.show()
-
-
 if __name__ == '__main__':
     # for dw in (DataWrapper(logroot + file) for file in os.listdir(logroot)):
     #     plot_peaks_subtract(dw, thresh=50, filtersize=5)
-    plot_peaks_subtract(DataWrapper("Bela_fel"), thresh=40, filtersize=5)
+    plot_peaks_subtract(DataWrapper("Virginia_fel"), threshtop=40, filtersize=5)

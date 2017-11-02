@@ -28,10 +28,11 @@ def find_peaks(data, threshold=75, center=True):
     return np.array([p[0] + np.argmax(highpass[p[0]:p[-1]+1]) for p in peaks])
 
 
-def find_peaks_subtract(dw, threshold=50, center=True):
+def find_peaks_subtract(dw, threshtop=50, threshbot=None, center=True):
+    threshbot = threshtop if threshbot is None else threshbot
     left = dw.get_data("left", norm=True)[-1] - dw.get_data("right", norm=True)[-1]
-    top = find_peaks(left, threshold, center)
-    bot = find_peaks(-left, threshold, center)
+    top = find_peaks(left, threshtop, center)
+    bot = find_peaks(-left, threshbot, center)
     return top, bot
 
 

@@ -6,7 +6,7 @@ import numpy as np
 
 from .parse import extract_data, pull_annotation
 from .peak import find_peaks, find_peaks_subtract
-from EBH import logroot, labroot
+from EBH import logroot, labroot, pklroot
 
 
 class DataWrapper:
@@ -21,14 +21,16 @@ class DataWrapper:
             # Assume source is ID
             self.ID = source
             data = extract_data(logroot + "{}.txt".format(source))
-        N = len(data[0])
         labpath = "{}{}.txt".format(labroot, self.ID)
         if os.path.exists(labpath):
+            print("Found labels!")
             a = pull_annotation(labpath)
         else:
-            a = [[None for _ in range(N)], [None for _ in range(N)]]
+            a = [None, None, {}]
         self.annot = {"l": a[0], "r": a[1], 0: a[0], 1: a[1]}
         self.data = {"l": data[:2], "r": data[2:]}
+        self.annotated = {"l": [], "r": []}
+        self.cfg = a[2]
 
     def get_data(self, side=None, norm=False):
         if side is None:
@@ -50,7 +52,7 @@ class DataWrapper:
         print("X size:", X.shape)
         return X
 
-    def get_peaks_subtract(self, threshold=50, peaksize=10, appendnorm=True):
+    def get_peaks_subtract(self, threshtop, threshbot=None, peaksize=10, appendnorm=True, args=True):
         time, left = self.get_data("left")
         right = self.get_data("right")[-1]
         if appendnorm:
@@ -59,7 +61,9 @@ class DataWrapper:
         else:
             ldata = left
             rdata = right
-        top, bot = find_peaks_subtract(self, threshold, center=True)
+        top, bot = find_peaks_subtract(self, threshtop=threshtop, threshbot=threshbot, center=True)
+        if args:
+            return top, bot
         hsz = peaksize // 2
         topX = np.array([ldata[p-hsz:p+hsz] for p in top if len(ldata)-hsz-1 > p > hsz])
         botX = np.array([rdata[p-hsz:p+hsz] for p in bot if len(rdata)-hsz-1 > p > hsz])
@@ -71,9 +75,9 @@ class DataWrapper:
         return {"N": np.concatenate(self.annot), "l": self.annot[0], "r": self.annot[1]}[str(side)[0]]
 
     @staticmethod
-    def load(source):
-        return pickle.load(gzip.open(source))
+    def load(ID):
+        return pickle.load(gzip.open(pklroot + ID))
 
-    def save(self, dest):
-        with gzip.open(dest) as handle:
+    def save(self):
+        with gzip.open(pklroot + self.ID) as handle:
             pickle.dump(self, handle)
