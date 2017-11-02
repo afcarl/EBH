@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from utility.peak import find_peaks
 from utility.frame import DataWrapper
 from utility.operation import average_filter
+from utility.label import labels
 
 
 def plot_acceleration(dw, show=True, dumppath=None):
@@ -34,7 +35,6 @@ def annotate_peaks(tpeaks, dpeaks, annot, ax):
     if annot is None:
         return
     Y = np.linalg.norm(dpeaks, axis=1) if dpeaks.ndim > 1 else dpeaks
-    labels = ("?", "clap", "jab", "ucut", "hook")
     for x, y, a in zip(tpeaks, Y, annot):
         ax.annotate(labels[a], xy=(x, y))
 

@@ -106,7 +106,7 @@ class Session:
 
 
 if __name__ == '__main__':
-    sess = Session("Virginia_fel")
+    sess = Session("Virginia_le")
     print("Doing session:", sess.dw.ID)
     sess.set_extraction_args()
     # sess.setup_video()
