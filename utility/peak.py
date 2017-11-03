@@ -1,5 +1,7 @@
 import numpy as np
 
+from .operation import average_filter
+
 
 def find_peaks(data, threshold=75, center=True):
     peak = []
@@ -28,9 +30,11 @@ def find_peaks(data, threshold=75, center=True):
     return np.array([p[0] + np.argmax(highpass[p[0]:p[-1]+1]) for p in peaks])
 
 
-def find_peaks_subtract(dw, threshtop=50, threshbot=None, center=True):
+def find_peaks_subtract(dw, threshtop=50, threshbot=None, center=True, filtersize=0):
     threshbot = threshtop if threshbot is None else threshbot
     left = dw.get_data("left", norm=True)[-1] - dw.get_data("right", norm=True)[-1]
+    if filtersize > 1:
+        left = average_filter(left, window=filtersize)
     top = find_peaks(left, threshtop, center)
     bot = find_peaks(-left, threshbot, center)
     return top, bot

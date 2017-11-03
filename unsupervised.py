@@ -32,7 +32,7 @@ def get_subtracted_data(usecache=True, appendnorm=False):
     for file in sorted(os.listdir(logroot)):
         dw = frame.DataWrapper(logroot + file)
         print(dw.ID)
-        toppeaks, botpeaks = dw.get_peaks_subtract(appendnorm)
+        toppeaks, botpeaks = dw.get_peaks(appendnorm)
         print("RIGHT:", toppeaks.shape)
         print("LEFT: ", botpeaks.shape)
         data.append(toppeaks)

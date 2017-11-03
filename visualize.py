@@ -36,7 +36,10 @@ def annotate_peaks(tpeaks, dpeaks, annot, ax):
         return
     Y = np.linalg.norm(dpeaks, axis=1) if dpeaks.ndim > 1 else dpeaks
     for x, y, a in zip(tpeaks, Y, annot):
-        ax.annotate(labels[a], xy=(x, y))
+        top = y > 0
+        va = "bottom" if top else "top"
+        offs = 2 * 1 if top else -1
+        ax.annotate(labels[a], xy=(x, y+offs), verticalalignment=va, horizontalalignment="center")
 
 
 def plot_peaks(time, data, thresh, ax=None, title="", annot=None):

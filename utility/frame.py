@@ -42,17 +42,14 @@ class DataWrapper:
             return dset[0], np.linalg.norm(dset[1], axis=1)
         return dset
 
-    def get_peaks_vanilla(self, side=None, threshold=75, peaksize=10, appendnorm=True):
-        time, data = self.get_data(side)
-        norm = np.linalg.norm(data, axis=1)
-        peakarg = find_peaks(norm, threshold=threshold, center=True)
+    def get_peaks(self, peaksize=10, appendnorm=True, args=True):
+        top, bot = find_peaks_subtract(self, threshtop=self.cfg["threshtop"],
+                                       threshbot=self.cfg["threshbot"],
+                                       filtersize=self.cfg["filtersize"],
+                                       center=True)
+        if args:
+            return top, bot
         hsz = peaksize // 2
-        data = np.concatenate((data, norm[:, None]), axis=-1) if appendnorm else data
-        X = np.array([data[p-hsz:p+hsz] for p in peakarg])
-        print("X size:", X.shape)
-        return X
-
-    def get_peaks_subtract(self, threshtop, threshbot=None, peaksize=10, appendnorm=True, args=True):
         time, left = self.get_data("left")
         right = self.get_data("right")[-1]
         if appendnorm:
@@ -61,10 +58,6 @@ class DataWrapper:
         else:
             ldata = left
             rdata = right
-        top, bot = find_peaks_subtract(self, threshtop=threshtop, threshbot=threshbot, center=True)
-        if args:
-            return top, bot
-        hsz = peaksize // 2
         topX = np.array([ldata[p-hsz:p+hsz] for p in top if len(ldata)-hsz-1 > p > hsz])
         botX = np.array([rdata[p-hsz:p+hsz] for p in bot if len(rdata)-hsz-1 > p > hsz])
         return topX, botX
@@ -72,7 +65,8 @@ class DataWrapper:
     def get_annotations(self, side=None):
         if self.annot is None:
             return
-        return {"N": np.concatenate(self.annot), "l": self.annot[0], "r": self.annot[1]}[str(side)[0]]
+        return {"N": np.concatenate((self.annot["l"], self.annot["r"])),
+                "l": self.annot[0], "r": self.annot[1]}[str(side)[0]]
 
     @staticmethod
     def load(ID):

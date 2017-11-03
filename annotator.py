@@ -1,5 +1,3 @@
-import cv2
-
 from EBH import vidroot
 from utility.frame import DataWrapper
 from visualize import plot_peaks_subtract
@@ -28,7 +26,7 @@ class Session:
     def set_extraction_args(self):
         xarg = self.extraction_arg
         while 1:
-            print("\nCurrent config:", xarg)
+            print("\nCONFIG:", ";".join("-".join(map(str, c)) for c in xarg.items()))
             plot_peaks_subtract(self.dw, xarg["threshtop"], xarg["threshbot"], filtersize=xarg["filtersize"])
             if input("Do you accept? Y/n > ").lower() == "n":
                 readarg("threshtop", xarg)
@@ -36,7 +34,7 @@ class Session:
                 readarg("filtersize", xarg)
             else:
                 break
-        newpeaks = self.dw.get_peaks_subtract(xarg["threshtop"], xarg["peaksize"], args=True)
+        newpeaks = self.dw.get_peaks(xarg["threshtop"], xarg["peaksize"], args=True)
         self.peaks.update(dict(zip(("left", "right"), newpeaks)))
 
     def annotate_cli(self, side):
@@ -49,33 +47,6 @@ class Session:
             print(f"LEN: {(peaktime[-1] - peaktime[0])/1000:.4f} s")
             self.dw.annot[side[0]] = "JHU".index(input("Annotation (J/H/U): "))
 
-    def setup_video(self):
-        varg = self.video_arg
-        # noinspection PyArgumentList
-        dev = cv2.VideoCapture(varg["source"])
-        if not dev.isOpened():
-            varg["dev"] = None
-            return
-        succ, frame = dev.read()
-        assert succ
-        dev.set(cv2.CAP_PROP_POS_AVI_RATIO, 1.)
-        varg.nframes = dev.get(cv2.CAP_PROP_POS_FRAMES)
-        varg.vlen = dev.get(cv2.CAP_PROP_POS_MSEC)
-        varg.dev = dev
-        dev.set(cv2.CAP_PROP_POS_AVI_RATIO, 0.)
-        for frno in range(varg.nframes):
-            succ, frame = dev.read()
-            assert succ
-            cv2.imshow(self.dw.ID, frame)
-            key = cv2.waitKey(100)
-            if key == 32:
-                while not key:
-                    key = cv2.waitKey(1000)
-            if key == 27:
-                break
-        # noinspection PyTypeChecker
-        readarg("offset", varg, itype=float)
-
     def slice_peak(self, peakcenter, side):
         xarg = self.extraction_arg
         time, norm = self.dw.get_data(side, norm=True)
@@ -85,28 +56,9 @@ class Session:
         pdata = norm[peakcenter-hsize:peakcenter+hsize]
         return ptime, pdata
 
-    def slice_video(self, ptime, pdata):
-        varg = self.video_arg
-        dev = varg["dev"]
-        fpms = varg["nframes"] / varg["vlen"]
-        nframes = (ptime[-1] - ptime[0]) / fpms
-        dev.set(cv2.CAP_PROP_POS_MSEC, varg["offset"] + ptime[0])
-        frames = []
-        for succ, frame in (dev.read() for _ in range(nframes)):
-            assert succ
-            frames.append(frame)
-        print("frames: {} vs {} measurements".format(len(frames), len(pdata)))
-        done = False
-        while not done:
-            for frame in frames:
-                cv2.imshow(self.dw.ID, frame)
-                key = cv2.waitKey(1./fpms)
-                if key == 27:
-                    done = True
-
 
 if __name__ == '__main__':
-    sess = Session("Virginia_le")
+    sess = Session("Bela_le")
     print("Doing session:", sess.dw.ID)
     sess.set_extraction_args()
     # sess.setup_video()
