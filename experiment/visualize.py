@@ -1,10 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from utility.peak import find_peaks
-from utility.frame import DataWrapper
-from utility.operation import average_filter
-from utility.label import labels
+from EBH.utility.peak import find_peaks
+from EBH.utility.frame import DataWrapper
+from EBH.utility.operation import average_filter
+from EBH.utility.const import labels
 
 
 def plot_acceleration(dw, show=True, dumppath=None):

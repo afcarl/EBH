@@ -1,6 +1,6 @@
-from EBH import vidroot
-from utility.frame import DataWrapper
-from visualize import plot_peaks_subtract
+from EBH.utility.const import vidroot
+from EBH.utility.frame import DataWrapper
+from experiment.visualize import plot_peaks_subtract
 
 
 def readarg(name, argdict, itype=int, prompt=None):

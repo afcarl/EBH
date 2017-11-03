@@ -2,7 +2,7 @@ import os
 import pickle
 import shutil
 
-from EBH import projectroot, rawroot, logroot, vidroot
+from .const import projectroot, rawroot, logroot, vidroot
 
 
 IDz = {}

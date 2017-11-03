@@ -1,7 +1,6 @@
 import numpy as np
 
-from EBH import projectroot
-from utility.label import labels
+from .const import labels
 
 
 # noinspection PyUnresolvedReferences

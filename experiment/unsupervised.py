@@ -7,8 +7,8 @@ from matplotlib import pyplot as plt
 from keras.models import Model
 from keras.layers import Dense, Input
 
-from utility import frame
-from EBH import logroot, projectroot
+from EBH.utility import frame
+from EBH.utility.const import logroot, projectroot
 
 
 def get_full_data(usecache=True, appendnorm=True):

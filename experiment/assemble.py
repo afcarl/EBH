@@ -4,8 +4,8 @@ import pickle
 
 import numpy as np
 
-from EBH import projectroot, logroot
-from utility.frame import DataWrapper
+from EBH.utility.const import logroot, projectroot
+from EBH.utility.frame import DataWrapper
 
 
 def pull_dws():

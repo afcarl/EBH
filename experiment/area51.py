@@ -1,4 +1,4 @@
-from utility.frame import DataWrapper
+from EBH.utility.frame import DataWrapper
 
 
 dw = DataWrapper("Bela_le")

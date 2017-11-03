@@ -4,9 +4,9 @@ import pickle
 
 import numpy as np
 
+from .peak import find_peaks_subtract
+from .const import logroot, labroot, pklroot
 from .parse import extract_data, pull_annotation
-from .peak import find_peaks, find_peaks_subtract
-from EBH import logroot, labroot, pklroot
 
 
 class DataWrapper:
