@@ -1,18 +1,18 @@
 from EBH.utility.operation import load_dataset
 
 
-def do_lda(X, Y):
+def do_lda():
     from matplotlib import pyplot as plt
     from sklearn.discriminant_analysis import (
         LinearDiscriminantAnalysis as LDA
     )
     from csxdata.visual.scatter import Scatter2D
-
+    X, Y = load_dataset()
     model = LDA().fit(X, Y)
     evar = model.explained_variance_ratio_
 
     print(f"EXPLAINED VARIANCE: {evar}, TOTAL: {evar.sum()}")
-    scat = Scatter2D(model.transform(X)[:, :2], Y, title="LDA transform")
+    scat = Scatter2D(model.transform(X)[:, (1, 2)], Y, title="LDA transform", axlabels=("DF01", "DF02"))
     scat.split_scatter()
     plt.legend()
     plt.show()
@@ -28,6 +28,7 @@ def fit_svm(kernel="linear"):
 
 
 if __name__ == '__main__':
+    # do_lda()
     fit_svm("linear")
-    fit_svm("rbf")
-    fit_svm("sigmoid")
+    # fit_svm("rbf")
+    # fit_svm("sigmoid")

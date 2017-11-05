@@ -91,6 +91,8 @@ def plot_peaks_subtract(dw, threshtop, threshbot=None, filtersize=3):
     plot_peaks_twoway(time, left, threshtop, threshbot, ax=tx, title="UNFILT")
     plot_peaks_twoway(time, lY, threshtop, threshbot, ax=bx, title="FILT ({})".format(filtersize), annot=dw.annot)
     plt.suptitle(dw.ID)
+    plt.get_current_fig_manager().window.showMaximized()
+    plt.tight_layout()
     plt.show()
 
 
@@ -111,4 +113,8 @@ def plot_peaks_fft(time, data):
 if __name__ == '__main__':
     # for dw in (DataWrapper(logroot + file) for file in os.listdir(logroot)):
     #     plot_peaks_subtract(dw, thresh=50, filtersize=5)
-    plot_peaks_subtract(DataWrapper("Virginia_fel"), threshtop=40, filtersize=5)
+    dw = DataWrapper("box4_fel")
+    plot_peaks_subtract(dw,
+                        dw.cfg.get("threshtop", 40),
+                        dw.cfg.get("threshbot", 40),
+                        dw.cfg.get("filtersize", 3))

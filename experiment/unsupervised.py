@@ -11,14 +11,14 @@ from EBH.utility import frame
 from EBH.utility.const import logroot, projectroot
 
 
-def get_full_data(usecache=True, appendnorm=True):
+def get_full_data(usecache=True):
     if os.path.exists(projectroot + "cch/fullcache.npa") and usecache:
         return np.load(projectroot + "cch/fullcache.npa")
     data = []
     for file in sorted(os.listdir(logroot)):
         dw = frame.DataWrapper(logroot + file)
         print(dw.ID)
-        data.append(dw.get_peaks_vanilla(appendnorm=appendnorm))
+        data.append(dw.get_peaks())
     data = np.concatenate(data, axis=0)
     if usecache:
         data.dump(projectroot + "cch/fullcache.npa")
@@ -124,5 +124,5 @@ if __name__ == '__main__':
     # fit_autoencoder(X)
     # fit_gmm(X)
     # fit_kmeans(X)
-    fit_affinityprop(X)
-    # plot_transform(X, "pca")
+    # fit_affinityprop(X)
+    plot_transform(X, "pca")

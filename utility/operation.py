@@ -13,7 +13,7 @@ def average_filter(series, window=2):
 def load_dataset(flatten=True, strY=True, split=0.):
     X, Y = pickle.load(gzip.open(projectroot + "data.pkl.gz"))
     if flatten:
-        X = X.reshape(len(X), np.prod(X.shape[1:]))
+        X = X.reshape(len(X), np.prod(X.shape[1:], dtype=int))
     if strY:
         Y = np.vectorize(lambda ix: labels[ix])(Y)
     if split:

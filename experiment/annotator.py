@@ -58,10 +58,7 @@ class Session:
 
 
 if __name__ == '__main__':
-    sess = Session("Bela_le")
+    sess = Session("box1_le")
     print("Doing session:", sess.dw.ID)
     sess.set_extraction_args()
     # sess.setup_video()
-    sess.annotate_cli(side="left")
-    sess.annotate_cli(side="right")
-    sess.dw.save()
