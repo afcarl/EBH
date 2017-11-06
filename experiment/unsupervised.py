@@ -18,21 +18,24 @@ def get_full_data(usecache=True):
     for file in sorted(os.listdir(logroot)):
         dw = frame.DataWrapper(logroot + file)
         print(dw.ID)
-        data.append(dw.get_peaks())
+        data.append(np.concatenate(dw.get_peaks(args=False), axis=0))
     data = np.concatenate(data, axis=0)
     if usecache:
         data.dump(projectroot + "cch/fullcache.npa")
     return data
 
 
-def get_subtracted_data(usecache=True, appendnorm=False):
+def get_subtracted_data(usecache=True):
     if os.path.exists(projectroot + "cch/subtrcache.npa") and usecache:
         return np.load(projectroot + "cch/subtrcache.npa")
     data = []
     for file in sorted(os.listdir(logroot)):
         dw = frame.DataWrapper(logroot + file)
+        dw.cfg["threshtop"] = 28
+        dw.cfg["threshbot"] = 28
+        dw.cfg["filtersize"] = 3
         print(dw.ID)
-        toppeaks, botpeaks = dw.get_peaks(appendnorm)
+        toppeaks, botpeaks = dw.get_peaks(peaksize=10, args=False)
         print("RIGHT:", toppeaks.shape)
         print("LEFT: ", botpeaks.shape)
         data.append(toppeaks)
@@ -117,8 +120,8 @@ def fit_affinityprop(data):
 
 
 if __name__ == '__main__':
-    X = get_full_data(usecache=False, appendnorm=False)
-    X = X.reshape(X.shape[0], np.prod(X.shape[1:]))
+    X = get_subtracted_data(usecache=False)
+    X = X.reshape(X.shape[0], np.prod(X.shape[1:], dtype=int))
     print("FINAL X SIZE:", X.shape)
 
     # fit_autoencoder(X)

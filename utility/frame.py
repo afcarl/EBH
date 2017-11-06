@@ -40,17 +40,19 @@ class DataWrapper:
         return dset
 
     def get_peaks(self, peaksize=10, args=True):
-        top, bot = find_peaks_subtract(self, threshtop=self.cfg["threshtop"],
-                                       threshbot=self.cfg["threshbot"],
-                                       filtersize=self.cfg["filtersize"],
+        top, bot = find_peaks_subtract(self, threshtop=self.cfg.get("threshtop", 35),
+                                       threshbot=self.cfg.get("threshbot", 35),
+                                       filtersize=self.cfg.get("filtersize", 3),
                                        peaksize=None)
         if args:
             return top, bot
         hsz = peaksize // 2
         time, left = self.get_data("left")
         right = self.get_data("right")[-1]
-        topX = np.array([left[p-hsz:p+hsz] for p in top])
-        botX = np.array([right[p-hsz:p+hsz] for p in bot])
+        lefttop = len(left)-peaksize-1
+        righttop = len(right)-peaksize-1
+        topX = np.array([left[p-hsz:p+hsz] for p in top if peaksize < p < lefttop])
+        botX = np.array([right[p-hsz:p+hsz] for p in bot if peaksize < p < righttop])
         return topX, botX
 
     def get_annotations(self, side=None):

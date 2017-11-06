@@ -36,18 +36,14 @@ def _split(alpha, X, Y, shuffle=True):
 
 
 def _test_model(model, modelname, X, Y, repeats=1, split=0.1, verbose=1):
-    strln = len(str(repeats))
     acc = np.empty(repeats)
-    print("-" * 50)
     for r in range(1, repeats+1):
         lX, lY, tX, tY = _split(split, X, Y)
         model.fit(lX, lY)
         a = (model.predict(tX) == tY).mean()
         acc[r-1] = a
-        if verbose > 1:
-            print(f"\rTesting {modelname} round {r:>{strln}}/{repeats}, Acc: {a:.4f}", end="")
     if verbose:
-        print(f"\n{modelname} final accuracy: {acc.mean():.4f}")
+        print(f"{modelname} accuracy: {acc.mean():.2%}")
     return acc.mean()
 
 
@@ -70,8 +66,6 @@ def fit_ann():
     # from sklearn.utils import compute_class_weight
     from tensorflow.contrib import keras as K
 
-    from EBH.utility.visual import plot_learning_dynamics
-
     Sequential = K.models.Sequential
     Dense, BN = K.layers.Dense, K.layers.BatchNormalization
 
@@ -86,9 +80,10 @@ def fit_ann():
     ])
     ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
 
-    history = ann.fit(lX, lY, epochs=100, validation_data=(tX, tY), shuffle=True, verbose=0)
-    plot_learning_dynamics(history)
+    ann.fit(lX, lY, epochs=100, validation_data=(tX, tY), shuffle=True, verbose=0)
+    print("ANN accuracy:", (ann.predict(tX).argmax(axis=0) == tY.argmax(axis=0)).mean())
 
 
 if __name__ == '__main__':
     run_classical_models()
+    fit_ann()
