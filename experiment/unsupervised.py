@@ -128,4 +128,4 @@ if __name__ == '__main__':
     # fit_gmm(X)
     # fit_kmeans(X)
     # fit_affinityprop(X)
-    plot_transform(X, "pca")
+    plot_transform(X, "kpca")

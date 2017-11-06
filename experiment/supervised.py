@@ -10,7 +10,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 
-from EBH.utility.operation import load_dataset, as_onehot
+from EBH.utility.operation import load_dataset
 
 
 class ClassifierMock:
@@ -49,39 +49,18 @@ def _test_model(model, modelname, X, Y, repeats=1, split=0.1, verbose=1):
 
 def run_classical_models():
     X, Y = load_dataset(as_matrix=True, normalize=True)
+    w = "balanced"
     for model, name in [
         (ClassifierMock(), "Baseline (Random)"),
-        (LogisticRegression(), "Logistic Regression"),
+        (LogisticRegression(class_weight=w), "Logistic Regression"),
         (LDA(), "LDA"), (QDA(), "QDA"),
         (GaussianNB(), "Naive Bayes"),
         (KNeighborsClassifier(), "K-Nearest Neighbours"),
-        (RandomForestClassifier(), "Random Forest"),
-        (SVC(kernel="linear"), "Linear SVM"),
-        (SVC(kernel="rbf"), "RBF-SVM")
+        (RandomForestClassifier(class_weight=w), "Random Forest"),
+        (SVC(kernel="linear", class_weight=w), "Linear SVM"),
+        (SVC(kernel="rbf", class_weight=w), "RBF-SVM")
     ]:
         _test_model(model, name, X, Y, repeats=100, verbose=2)
-
-
-def fit_ann():
-    # from sklearn.utils import compute_class_weight
-    from tensorflow.contrib import keras as K
-
-    Sequential = K.models.Sequential
-    Dense, BN = K.layers.Dense, K.layers.BatchNormalization
-
-    lX, ly, tX, ty = load_dataset(0.25, as_matrix=True, normalize=True)
-    lY, tY = as_onehot(ly, ty)
-
-    ann = Sequential([
-        Dense(input_dim=lX.shape[1], units=120, activation="relu"), BN(),
-        Dense(units=60, activation="relu"), BN(),
-        Dense(units=30, activation="tanh"), BN(),
-        Dense(units=lY.shape[1], activation="softmax")
-    ])
-    ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
-
-    ann.fit(lX, lY, epochs=100, validation_data=(tX, tY), shuffle=True, verbose=0)
-    print("ANN accuracy:", (ann.predict(tX).argmax(axis=0) == tY.argmax(axis=0)).mean())
 
 
 if __name__ == '__main__':
