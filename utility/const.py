@@ -9,5 +9,5 @@ labroot = projectroot + "man/"
 pklroot = projectroot + "pkl/"
 
 labels = "?C0JUH"
-dummy = (0, 1, 2, 3, 4)
+dummy = tuple(range(len(labels)))
 onehot = np.eye(len(dummy))

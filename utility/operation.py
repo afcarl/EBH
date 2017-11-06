@@ -3,19 +3,42 @@ import pickle
 
 import numpy as np
 
-from .const import projectroot, labels
+from .const import projectroot, labels, onehot
 
 
 def average_filter(series, window=2):
     return np.convolve(series, np.ones(window) / window, mode="same")
 
 
-def load_dataset(flatten=True, strY=True, split=0.):
+def as_onehot(Y, categ=None):
+    categ = onehot if categ is None else categ
+    return np.array([categ[ix] for ix in Y])
+
+
+def as_string(Y, lbls=None):
+    categ = labels if lbls is None else lbls
+    return np.vectorize(lambda ix: categ[ix])(Y)
+
+
+def as_matrix(X):
+    if X.ndim == 2:
+        return X
+    if X.ndim == 1:
+        return X[:, None]
+    if X.ndim > 2:
+        return X.reshape(X.shape[0], np.prod(X.shape[1:], dtype=int))
+
+
+def load_dataset(split=0., **kw):
     X, Y = pickle.load(gzip.open(projectroot + "data.pkl.gz"))
-    if flatten:
-        X = X.reshape(len(X), np.prod(X.shape[1:], dtype=int))
-    if strY:
-        Y = np.vectorize(lambda ix: labels[ix])(Y)
+    if kw.get("as_matrix"):
+        X = as_matrix(X)
+    if kw.get("normalize"):
+        X = normalize(X)
+    if kw.get("as_string"):
+        Y = as_string(Y, kw.get("labels", labels))
+    elif kw.get("as_onehot"):
+        Y = as_onehot(Y, kw.get("categ", onehot))
     if split:
         arg = np.arange(len(X))
         np.random.shuffle(arg)
@@ -23,3 +46,10 @@ def load_dataset(flatten=True, strY=True, split=0.):
         larg, targ = arg[n:], arg[:n]
         return X[larg], Y[larg], X[targ], Y[targ]
     return X, Y
+
+
+def normalize(X, mean=None, std=None, getparam=False):
+    mean = X.mean(axis=0, keepdims=True) if mean is None else mean
+    std = X.std(axis=0, keepdims=True) if std is None else std
+    nX = (X - mean) / std
+    return (nX, mean, std) if getparam else nX
