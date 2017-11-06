@@ -62,7 +62,7 @@ def run_classical_models():
         (SVC(kernel="linear"), "Linear SVM"),
         (SVC(kernel="rbf"), "RBF-SVM")
     ]:
-        _test_model(model, name, X, Y, repeats=30, verbose=2)
+        _test_model(model, name, X, Y, repeats=100, verbose=2)
 
 
 def fit_ann():
