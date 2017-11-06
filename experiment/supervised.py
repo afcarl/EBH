@@ -27,7 +27,7 @@ class ClassifierMock:
 
 def _split(alpha, X, Y, shuffle=True):
     N = len(X)
-    tN = N*alpha
+    tN = int(N*alpha)
     arg = np.arange(N)
     if shuffle:
         np.random.shuffle(arg)
@@ -62,7 +62,7 @@ def run_classical_models():
         (SVC(kernel="linear"), "Linear SVM"),
         (SVC(kernel="rbf"), "RBF-SVM")
     ]:
-        _test_model(model, name, X, Y, repeats=10, verbose=2)
+        _test_model(model, name, X, Y, repeats=30, verbose=2)
 
 
 def fit_ann():
