@@ -113,7 +113,7 @@ def plot_peaks_fft(time, data):
 if __name__ == '__main__':
     # for dw in (DataWrapper(logroot + file) for file in os.listdir(logroot)):
     #     plot_peaks_subtract(dw, thresh=50, filtersize=5)
-    dw = DataWrapper("Dia_fel")
+    dw = DataWrapper("box5_fel")
     plot_peaks_subtract(dw,
                         dw.cfg.get("threshtop", 40),
                         dw.cfg.get("threshbot", 40),

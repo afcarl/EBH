@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 from sklearn.decomposition import PCA, FastICA, KernelPCA
+from sklearn.manifold import TSNE, Isomap, SpectralEmbedding
 from sklearn.cluster import KMeans
 from matplotlib import pyplot as plt
 from keras.models import Model
@@ -47,11 +48,12 @@ def get_subtracted_data(usecache=True):
 
 
 def plot_transform(data, trname):
-    model = {"pca": PCA(whiten=True), "ica": FastICA(whiten=True), "kpca": KernelPCA(kernel="rbf")}[trname.lower()]
+    model = {"pca": PCA(whiten=True), "ica": FastICA(whiten=True),
+             "kpca": KernelPCA(kernel="rbf"), "t-sne": TSNE(init="pca", verbose=1),
+             "isomap": Isomap(), "se": SpectralEmbedding()
+             }[trname.lower()]
     lX = model.fit_transform(data / 255.).T
-    if trname in "kpca":
-        print("EXPLAINED VARIANCE:", model.explained_variance_ratio_)
-    plt.plot(lX[0], lX[1], "b.", alpha=0.25)
+    plt.plot(lX[0], lX[1], "b.", alpha=0.1)
     plt.title(trname.upper())
     plt.show()
 
@@ -120,7 +122,7 @@ def fit_affinityprop(data):
 
 
 if __name__ == '__main__':
-    X = get_subtracted_data(usecache=False)
+    X = get_subtracted_data(usecache=True)
     X = X.reshape(X.shape[0], np.prod(X.shape[1:], dtype=int))
     print("FINAL X SIZE:", X.shape)
 
@@ -128,4 +130,4 @@ if __name__ == '__main__':
     # fit_gmm(X)
     # fit_kmeans(X)
     # fit_affinityprop(X)
-    plot_transform(X, "kpca")
+    plot_transform(X, "se")
