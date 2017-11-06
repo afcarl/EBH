@@ -69,7 +69,7 @@ def fit_ann():
     Sequential = K.models.Sequential
     Dense, BN = K.layers.Dense, K.layers.BatchNormalization
 
-    lX, ly, tX, ty = load_dataset(0.1, as_matrix=True, normalize=True)
+    lX, ly, tX, ty = load_dataset(0.25, as_matrix=True, normalize=True)
     lY, tY = as_onehot(ly, ty)
 
     ann = Sequential([
@@ -86,4 +86,4 @@ def fit_ann():
 
 if __name__ == '__main__':
     run_classical_models()
-    fit_ann()
+    # fit_ann()
