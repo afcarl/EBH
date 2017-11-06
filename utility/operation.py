@@ -10,6 +10,12 @@ def average_filter(series, window=2):
     return np.convolve(series, np.ones(window) / window, mode="same")
 
 
+def shuffle(X, Y, *more):
+    arg = np.arange(len(X))
+    np.random.shuffle(arg)
+    return tuple(array[arg] for array in (X, Y) + more)
+
+
 def as_onehot(Y, categ=None):
     categ = onehot if categ is None else categ
     return np.array([categ[ix] for ix in Y])

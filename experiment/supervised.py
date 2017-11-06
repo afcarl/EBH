@@ -1,41 +1,68 @@
+import numpy as np
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import (
+    QuadraticDiscriminantAnalysis as QDA,
+    LinearDiscriminantAnalysis as LDA
+)
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+
 from EBH.utility.operation import load_dataset, as_onehot
 
 
-def do_lda():
-    from matplotlib import pyplot as plt
-    from sklearn.discriminant_analysis import (
-        LinearDiscriminantAnalysis as LDA
-    )
-    from csxdata.visual.scatter import Scatter2D
-    X, Y = load_dataset(as_matrix=True, as_string=True)
-    model = LDA().fit(X, Y)
-    evar = model.explained_variance_ratio_
+class ClassifierMock:
 
-    print(f"EXPLAINED VARIANCE: {evar}, TOTAL: {evar.sum()}")
-    scat = Scatter2D(model.transform(X)[:, (1, 2)], Y, title="LDA transform", axlabels=("DF01", "DF02"))
-    scat.split_scatter()
-    plt.legend()
-    plt.show()
+    def __init__(self):
+        self.categ = []
+
+    def fit(self, X, Y):
+        self.categ = np.unique(Y)
+
+    def predict(self, X):
+        return np.random.choice(self.categ, size=X.shape[0])
 
 
-def random_classifier_mock():
-    from random import choice
-    lX, lY, tX, tY = load_dataset(0.1)
-    categ = list(set(tY))
+def _split(alpha, X, Y, shuffle=True):
+    N = len(X)
+    tN = N*alpha
+    arg = np.arange(N)
+    if shuffle:
+        np.random.shuffle(arg)
+    targ, larg = arg[:tN], arg[tN:]
+    return X[larg], Y[larg], X[targ], Y[targ]
 
-    eq = [choice(categ) == label for label in tY]
 
-    print("Random baseline accuracy:", sum(eq) / len(eq))
+def _test_model(model, modelname, X, Y, repeats=1, split=0.1, verbose=1):
+    strln = len(str(repeats))
+    acc = np.empty(repeats)
+    for r in range(1, repeats+1):
+        lX, lY, tX, tY = _split(split, X, Y)
+        model.fit(lX, lY)
+        acc[r-1] = (model.predict(tX) == tY).mean()
+        if verbose > 1:
+            print(f"\rTesting {modelname} round {r:>{strln}}/{repeats}, Acc: {acc[-1]:.4f}", end="")
+    if verbose:
+        print("\n"+"-"*50)
+        print(f"{modelname} final accuracy: {acc.mean():.4f}")
+    return acc.mean()
 
 
-def fit_svm(kernel="linear"):
-    from sklearn.svm import SVC
-    lX, lY, tX, tY = load_dataset(split=0.1, as_matrix=True, normalize=True)
-
-    svm = SVC(kernel=kernel)
-    svm.fit(lX, lY)
-    acc = (svm.predict(tX) == tY).sum() / len(tX)
-    print(f"Support Vector Machine with {kernel} kernel:", acc)
+def run_classical_models():
+    X, Y = load_dataset(as_matrix=True, normalize=True)
+    for model, name in [
+        (ClassifierMock(), "Baseline (Random)"),
+        (LogisticRegression(), "LogRegress"),
+        (LDA(), "LDA"), (QDA(), "QDA"),
+        (GaussianNB(), "Naive Bayes"),
+        (KNeighborsClassifier(), "KNN"),
+        (RandomForestClassifier(), "Random Forest"),
+        (SVC(kernel="linear"), "Linear SVM"),
+        (SVC(kernel="rbf"), "RBF-SVM")
+    ]:
+        _test_model(model, name, X, Y, repeats=10, verbose=2)
 
 
 def fit_ann():
@@ -47,63 +74,19 @@ def fit_ann():
     Sequential = K.models.Sequential
     Dense, BN = K.layers.Dense, K.layers.BatchNormalization
 
-    X, y = load_dataset(as_matrix=True, normalize=True)
-    Y = as_onehot(y)
-    # w = compute_class_weight("balanced", np.unique(y), y)
+    lX, ly, tX, ty = load_dataset(0.1, as_matrix=True, normalize=True)
+    lY, tY = as_onehot(ly, ty)
 
     ann = Sequential([
-        Dense(input_dim=X.shape[1], units=120, activation="relu"), BN(),
+        Dense(input_dim=lX.shape[1], units=120, activation="relu"), BN(),
         Dense(units=60, activation="relu"), BN(),
         Dense(units=30, activation="tanh"), BN(),
-        Dense(units=Y.shape[1], activation="softmax")
+        Dense(units=lY.shape[1], activation="softmax")
     ])
     ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
 
-    history = ann.fit(X, Y, epochs=100, validation_split=0.1, shuffle=True, verbose=0)
+    history = ann.fit(lX, lY, epochs=100, validation_data=(tX, tY), shuffle=True, verbose=0)
     plot_learning_dynamics(history)
-
-
-def fit_logregress():
-    from sklearn.linear_model import LogisticRegression
-
-    lX, lY, tX, tY = load_dataset(0.1, as_matrix=True, normalize=True)
-
-    model = LogisticRegression()
-    model.fit(lX, lY)
-
-    print("Logistic regression acc:", (model.predict(tX) == tY).mean())
-
-
-def fit_naive_bayes():
-    from sklearn.naive_bayes import GaussianNB
-    lX, lY, tX, tY = load_dataset(split=0.1, as_matrix=True, normalize=True)
-
-    model = GaussianNB()
-    model.fit(lX, lY)
-
-    print("Gaussian NB acc:", (model.predict(tX) == tY).mean())
-
-
-def fit_knn():
-    from sklearn.neighbors import KNeighborsClassifier
-
-    lX, lY, tX, tY = load_dataset(0.2, as_matrix=True, normalize=True)
-
-    knn = KNeighborsClassifier()
-    knn.fit(lX, lY)
-
-    print("KNN acc:", (knn.predict(tX) == tY).mean())
-
-
-def fit_random_forest():
-    from sklearn.ensemble import RandomForestClassifier
-
-    lX, lY, tX, tY = load_dataset(0.1, as_matrix=True, normalize=True)
-
-    forest = RandomForestClassifier()
-    forest.fit(lX, lY)
-
-    print("Random forest acc:", (forest.predict(tX) == tY).mean())
 
 
 if __name__ == '__main__':
