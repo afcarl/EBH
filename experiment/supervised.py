@@ -42,9 +42,10 @@ def _test_model(model, modelname, X, Y, repeats=1, split=0.1, verbose=1):
     for r in range(1, repeats+1):
         lX, lY, tX, tY = _split(split, X, Y)
         model.fit(lX, lY)
-        acc[r-1] = (model.predict(tX) == tY).mean()
+        a = (model.predict(tX) == tY).mean()
+        acc[r-1] = a
         if verbose > 1:
-            print(f"\rTesting {modelname} round {r:>{strln}}/{repeats}, Acc: {acc[-1]:.4f}", end="")
+            print(f"\rTesting {modelname} round {r:>{strln}}/{repeats}, Acc: {a:.4f}", end="")
     if verbose:
         print(f"\n{modelname} final accuracy: {acc.mean():.4f}")
     return acc.mean()
