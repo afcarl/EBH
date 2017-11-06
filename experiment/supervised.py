@@ -54,10 +54,10 @@ def run_classical_models():
     X, Y = load_dataset(as_matrix=True, normalize=True)
     for model, name in [
         (ClassifierMock(), "Baseline (Random)"),
-        (LogisticRegression(), "LogRegress"),
+        (LogisticRegression(), "Logistic Regression"),
         (LDA(), "LDA"), (QDA(), "QDA"),
         (GaussianNB(), "Naive Bayes"),
-        (KNeighborsClassifier(), "KNN"),
+        (KNeighborsClassifier(), "K-Nearest Neighbours"),
         (RandomForestClassifier(), "Random Forest"),
         (SVC(kernel="linear"), "Linear SVM"),
         (SVC(kernel="rbf"), "RBF-SVM")
@@ -90,13 +90,4 @@ def fit_ann():
 
 
 if __name__ == '__main__':
-    # do_lda()
-    random_classifier_mock()
-    fit_svm("linear")
-    fit_svm("rbf")
-    fit_svm("sigmoid")
-    fit_ann()
-    fit_naive_bayes()
-    fit_knn()
-    fit_random_forest()
-    fit_logregress()
+    run_classical_models()
