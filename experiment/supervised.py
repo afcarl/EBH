@@ -38,6 +38,7 @@ def _split(alpha, X, Y, shuffle=True):
 def _test_model(model, modelname, X, Y, repeats=1, split=0.1, verbose=1):
     strln = len(str(repeats))
     acc = np.empty(repeats)
+    print("-" * 50)
     for r in range(1, repeats+1):
         lX, lY, tX, tY = _split(split, X, Y)
         model.fit(lX, lY)
@@ -45,8 +46,7 @@ def _test_model(model, modelname, X, Y, repeats=1, split=0.1, verbose=1):
         if verbose > 1:
             print(f"\rTesting {modelname} round {r:>{strln}}/{repeats}, Acc: {acc[-1]:.4f}", end="")
     if verbose:
-        print("\n"+"-"*50)
-        print(f"{modelname} final accuracy: {acc.mean():.4f}")
+        print(f"\n{modelname} final accuracy: {acc.mean():.4f}")
     return acc.mean()
 
 
