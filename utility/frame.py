@@ -29,6 +29,28 @@ class DataWrapper:
         self.annotated = {"l": [], "r": []}
         self.cfg = a[2]
 
+    def adjust_threshold(self):
+        if self.annot["l"] is None or self.annot["r"] is None:
+            return
+        lN = len(self.annot["l"])
+        rN = len(self.annot["r"])
+        self.cfg["threshtop"] = 40
+        self.cfg["threshbot"] = 40
+        self.cfg["filtersize"] = 3
+        for i in range(40):
+            lpeaks, rpeaks = self.get_peaks(peaksize=10, args=True)
+            lgood = len(lpeaks) >= lN
+            rgood = len(rpeaks) >= rN
+            if rgood and lgood:
+                break
+            if not lgood and self.cfg["threshtop"] > 20:
+                self.cfg["threshtop"] -= 1
+            if not rgood and self.cfg["threshbot"] > 20:
+                self.cfg["threshbot"] -= 1
+        else:
+            print("Couldn't adjust threshold for", self.ID)
+        print("Adjusted config to", self.cfg)
+
     def get_data(self, side=None, norm=False):
         if side is None:
             dset = (np.concatenate((self.data["l"][0], self.data["r"][0])),
@@ -43,7 +65,7 @@ class DataWrapper:
         top, bot = find_peaks_subtract(self, threshtop=self.cfg.get("threshtop", 35),
                                        threshbot=self.cfg.get("threshbot", 35),
                                        filtersize=self.cfg.get("filtersize", 3),
-                                       peaksize=None)
+                                       peaksize=0)
         if args:
             return top, bot
         hsz = peaksize // 2

@@ -19,8 +19,8 @@ def _extract_line(line):
 def _arrayify(stream, start, end):
     times, accels = [], []
     for time, accel in map(_extract_line, stream):
-        # if time < start:
-        #     continue
+        if time < start:
+            continue
         times.append(time - start)
         accels.append(accel)
         if time >= end:

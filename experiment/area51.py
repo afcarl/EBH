@@ -31,4 +31,4 @@ def inspect_classes():
 
 
 if __name__ == '__main__':
-    inspect_classes()
+    inspect_session("box6_fel")

@@ -82,11 +82,8 @@ def plot_peaks_subtract(dw, threshtop, threshbot=None, filtersize=3):
         threshbot = threshtop
     time, nl = dw.get_data("left", norm=True)
     nr = dw.get_data("right", norm=True)[-1]
-    left, right = nl - nr, nr - nl
-    if filtersize > 1:
-        lY, rY = average_filter(left, filtersize), average_filter(right, filtersize)
-    else:
-        lY, rY = left, right
+    left = nl - nr
+    lY = average_filter(left, filtersize) if filtersize > 1 else left
     _, (tx, bx) = plt.subplots(2, 1, sharex=True)
     plot_peaks_twoway(time, left, threshtop, threshbot, ax=tx, title="UNFILT")
     plot_peaks_twoway(time, lY, threshtop, threshbot, ax=bx, title="FILT ({})".format(filtersize), annot=dw.annot)
@@ -113,7 +110,8 @@ def plot_peaks_fft(time, data):
 if __name__ == '__main__':
     # for dw in (DataWrapper(logroot + file) for file in os.listdir(logroot)):
     #     plot_peaks_subtract(dw, thresh=50, filtersize=5)
-    dw = DataWrapper("box5_fel")
+    dw = DataWrapper("box6_fel")
+    # dw.adjust_threshold()
     plot_peaks_subtract(dw,
                         dw.cfg.get("threshtop", 40),
                         dw.cfg.get("threshbot", 40),
