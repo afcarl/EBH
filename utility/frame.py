@@ -12,6 +12,7 @@ from .parse import extract_data, pull_annotation
 class DataWrapper:
 
     def __init__(self, source):
+        self.cfg = dict(threshtop=40, threshbot=40, filtersize=3, mindist=10)
         if ".txt" == source[-4:]:
             self.ID = os.path.split(source)[-1].split(".")[0]
             data = extract_data(source)
@@ -27,7 +28,7 @@ class DataWrapper:
         self.annot = {"l": a[0], "r": a[1], 0: a[0], 1: a[1]}
         self.data = {"l": data[:2], "r": data[2:]}
         self.annotated = {"l": [], "r": []}
-        self.cfg = a[2]
+        self.cfg.update(a[2])
 
     def adjust_threshold(self):
         if self.annot["l"] is None or self.annot["r"] is None:
@@ -37,8 +38,9 @@ class DataWrapper:
         self.cfg["threshtop"] = 40
         self.cfg["threshbot"] = 40
         self.cfg["filtersize"] = 3
+        self.cfg["mindist"] = 10
         for i in range(40):
-            lpeaks, rpeaks = self.get_peaks(peaksize=10, args=True)
+            lpeaks, rpeaks = self.get_peaks(peaksize=10, center=True)
             lgood = len(lpeaks) >= lN
             rgood = len(rpeaks) >= rN
             if rgood and lgood:
@@ -61,21 +63,12 @@ class DataWrapper:
             return dset[0], np.linalg.norm(dset[1], axis=1)
         return dset
 
-    def get_peaks(self, peaksize=10, args=True):
-        top, bot = find_peaks_subtract(self, threshtop=self.cfg.get("threshtop", 35),
-                                       threshbot=self.cfg.get("threshbot", 35),
-                                       filtersize=self.cfg.get("filtersize", 3),
-                                       peaksize=0)
-        if args:
-            return top, bot
-        hsz = peaksize // 2
-        time, left = self.get_data("left")
-        right = self.get_data("right")[-1]
-        lefttop = len(left)-peaksize-1
-        righttop = len(right)-peaksize-1
-        topX = np.array([left[p-hsz:p+hsz] for p in top if peaksize < p < lefttop])
-        botX = np.array([right[p-hsz:p+hsz] for p in bot if peaksize < p < righttop])
-        return topX, botX
+    def get_peaks(self, peaksize=10, center=True):
+        return find_peaks_subtract(self, threshtop=self.cfg["threshtop"],
+                                   threshbot=self.cfg["threshbot"],
+                                   filtersize=self.cfg["filtersize"],
+                                   mindist=self.cfg["mindist"],
+                                   peaksize=peaksize, center=center)
 
     def get_annotations(self, side=None):
         if self.annot is None:
@@ -84,7 +77,7 @@ class DataWrapper:
                 "l": self.annot[0], "r": self.annot[1]}[str(side)[0]]
 
     def get_learning_table(self, peaksize=10):
-        X = np.concatenate(self.get_peaks(peaksize, args=False))
+        X = np.concatenate(self.get_peaks(peaksize, center=False))
         Y = self.get_annotations(side=None)
         assert len(X) == len(Y), f"Lengths not equal in {self.ID}: X: {X.shape} Y: {Y.shape}"
         return X, Y

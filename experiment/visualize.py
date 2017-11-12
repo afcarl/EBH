@@ -57,12 +57,12 @@ def plot_peaks(time, data, thresh, ax=None, title="", annot=None):
     return ax
 
 
-def plot_peaks_twoway(time, data, threshtop, threshbot=None, ax=None, title="", annot=None):
+def plot_peaks_twoway(time, data, threshtop, threshbot=None, mindist=10, ax=None, title="", annot=None):
     ax = plt.gca() if ax is None else ax
     threshbot = threshtop if threshbot is None else threshbot
     Y = np.linalg.norm(data, axis=1) if data.ndim > 1 else data
-    tpeaks = find_peaks(Y, threshold=threshtop)
-    bpeaks = find_peaks(-Y, threshold=threshbot)
+    tpeaks = find_peaks(Y, threshold=threshtop, mindist=mindist)
+    bpeaks = find_peaks(-Y, threshold=threshbot, mindist=mindist)
     ax.plot(time, Y)
     ax.plot(time[tpeaks], Y[tpeaks], "rx")
     ax.plot(time[bpeaks], Y[bpeaks], "rx")
@@ -77,19 +77,21 @@ def plot_peaks_twoway(time, data, threshtop, threshbot=None, ax=None, title="", 
 
 
 # noinspection PyTypeChecker
-def plot_peaks_subtract(dw, threshtop, threshbot=None, filtersize=3):
-    if threshbot is None:
-        threshbot = threshtop
+def plot_peaks_subtract(dw):
+    filtersize, mindist = dw.cfg["filtersize"], dw.cfg["mindist"]
+    threshtop, threshbot = dw.cfg["threshtop"], dw.cfg["threshbot"]
     time, nl = dw.get_data("left", norm=True)
     nr = dw.get_data("right", norm=True)[-1]
     left = nl - nr
     lY = average_filter(left, filtersize) if filtersize > 1 else left
     _, (tx, bx) = plt.subplots(2, 1, sharex=True)
-    plot_peaks_twoway(time, left, threshtop, threshbot, ax=tx, title="UNFILT")
-    plot_peaks_twoway(time, lY, threshtop, threshbot, ax=bx, title="FILT ({})".format(filtersize), annot=dw.annot)
+    plot_peaks_twoway(time, left, threshtop, threshbot, mindist=mindist, ax=tx,
+                      title="UNFILT")
+    plot_peaks_twoway(time, lY, threshtop, threshbot, mindist=mindist, ax=bx,
+                      title=f"FILT ({filtersize})", annot=dw.annot)
     plt.suptitle(dw.ID)
     plt.get_current_fig_manager().window.showMaximized()
-    plt.tight_layout()
+    plt.subplots_adjust(top=0.8, bottom=0.041, left=0.033, right=0.99, hspace=0.093, wspace=0.2)
     plt.show()
 
 
@@ -110,9 +112,6 @@ def plot_peaks_fft(time, data):
 if __name__ == '__main__':
     # for dw in (DataWrapper(logroot + file) for file in os.listdir(logroot)):
     #     plot_peaks_subtract(dw, thresh=50, filtersize=5)
-    dw = DataWrapper("box6_fel")
+    dwrap = DataWrapper("box4_fel")
     # dw.adjust_threshold()
-    plot_peaks_subtract(dw,
-                        dw.cfg.get("threshtop", 40),
-                        dw.cfg.get("threshbot", 40),
-                        dw.cfg.get("filtersize", 3))
+    plot_peaks_subtract(dwrap)

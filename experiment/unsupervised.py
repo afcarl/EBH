@@ -19,7 +19,7 @@ def get_full_data(usecache=True):
     for file in sorted(os.listdir(logroot)):
         dw = frame.DataWrapper(logroot + file)
         print(dw.ID)
-        data.append(np.concatenate(dw.get_peaks(args=False), axis=0))
+        data.append(np.concatenate(dw.get_peaks(center=False), axis=0))
     data = np.concatenate(data, axis=0)
     if usecache:
         data.dump(projectroot + "cch/fullcache.npa")
@@ -36,7 +36,7 @@ def get_subtracted_data(usecache=True):
         dw.cfg["threshbot"] = 28
         dw.cfg["filtersize"] = 3
         print(dw.ID)
-        toppeaks, botpeaks = dw.get_peaks(peaksize=10, args=False)
+        toppeaks, botpeaks = dw.get_peaks(peaksize=10, center=False)
         print("RIGHT:", toppeaks.shape)
         print("LEFT: ", botpeaks.shape)
         data.append(toppeaks)
@@ -130,4 +130,4 @@ if __name__ == '__main__':
     # fit_gmm(X)
     # fit_kmeans(X)
     # fit_affinityprop(X)
-    plot_transform(X, "se")
+    plot_transform(X, "kpca")
