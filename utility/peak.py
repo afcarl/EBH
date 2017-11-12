@@ -42,11 +42,3 @@ def find_peaks_subtract(dw, threshtop=50, threshbot=None, filtersize=0, peaksize
     top = find_peaks(left, threshtop, peaksize)
     bot = find_peaks(-left, threshbot, peaksize)
     return top, bot
-
-
-def extract_peaks(peakargs, data, proxy=5):
-    prx = peakargs.copy()
-    prx[:, 0] -= proxy
-    prx[:, 1] += proxy
-    out = [data[s:e] for s, e in prx]
-    return out

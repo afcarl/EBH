@@ -86,7 +86,7 @@ class DataWrapper:
     def get_learning_table(self, peaksize=10):
         X = np.concatenate(self.get_peaks(peaksize, args=False))
         Y = self.get_annotations(side=None)
-        assert len(X) == len(Y), "Lengths not equal in {}".format(self.ID)
+        assert len(X) == len(Y), f"Lengths not equal in {self.ID}: X: {X.shape} Y: {Y.shape}"
         return X, Y
 
     @staticmethod
