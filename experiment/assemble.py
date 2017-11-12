@@ -12,9 +12,13 @@ def pull_dws():
     out = []
     for logfl in os.listdir(logroot):
         dw = DataWrapper(logroot + logfl)
+        print("Reading", dw.ID, end="... ")
+        if dw.annot["l"] is None or dw.annot["r"] is None:
+            print("unlabeled!")
+            continue
+        print("labeled.")
         out.append(dw)
-    return [dw for dw in (DataWrapper(logroot + lofgl) for lofgl in os.listdir(logroot))
-            if dw.annot[0] is not None]
+    return out
 
 
 def merge_dws(dws):

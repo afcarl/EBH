@@ -22,16 +22,18 @@ class DataWrapper:
         labpath = "{}{}.txt".format(labroot, self.ID)
         if os.path.exists(labpath):
             a = pull_annotation(labpath)
-            print("Found labels with config:", a[-1])
         else:
             a = [None, None, {}]
-        self.annot = {"l": a[0], "r": a[1], 0: a[0], 1: a[1]}
+        self.annot = {"l": a[0], "r": a[1]}
         self.data = {"l": data[:2], "r": data[2:]}
-        self.annotated = {"l": [], "r": []}
         self.cfg.update(a[2])
 
+    @property
+    def is_annotated(self):
+        return not (self.annot["l"] is None or self.annot["r"] is None)
+
     def adjust_threshold(self):
-        if self.annot["l"] is None or self.annot["r"] is None:
+        if not self.is_annotated:
             return
         lN = len(self.annot["l"])
         rN = len(self.annot["r"])
@@ -64,17 +66,24 @@ class DataWrapper:
         return dset
 
     def get_peaks(self, peaksize=10, center=True):
-        return find_peaks_subtract(self, threshtop=self.cfg["threshtop"],
-                                   threshbot=self.cfg["threshbot"],
-                                   filtersize=self.cfg["filtersize"],
-                                   mindist=self.cfg["mindist"],
-                                   peaksize=peaksize, center=center)
+        top, bot = find_peaks_subtract(
+            self, threshtop=self.cfg["threshtop"], threshbot=self.cfg["threshbot"],
+            filtersize=self.cfg["filtersize"], mindist=self.cfg["mindist"],
+            peaksize=peaksize
+        )
+        if center:
+            return top, bot
+        (ltime, ldata), (rtime, rdata) = self.data["l"], self.data["r"]
+        hsize = peaksize // 2
+        topX = np.array([ldata[p-hsize:p+hsize] for p in top])
+        botX = np.array([rdata[p-hsize:p+hsize] for p in bot])
+        return topX, botX
 
     def get_annotations(self, side=None):
-        if self.annot is None:
-            return
-        return {"N": np.concatenate((self.annot["l"], self.annot["r"])),
-                "l": self.annot[0], "r": self.annot[1]}[str(side)[0]]
+        if not self.is_annotated:
+            print("Incomplete annotation in", self.ID)
+            return None
+        return self.annot.get(str(side).lower()[0], np.r_[self.annot["l"], self.annot["r"]])
 
     def get_learning_table(self, peaksize=10):
         X = np.concatenate(self.get_peaks(peaksize, center=False))
