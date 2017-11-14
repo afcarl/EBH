@@ -4,28 +4,31 @@ from .const import labels
 
 
 # noinspection PyUnresolvedReferences
-def _extract_datetime(line):
-    return np.datetime64("T".join(line.strip().split(" ")[:2])).astype(float)
+def _extract_datetime(half):
+    return np.datetime64("T".join(half.strip().split(" ")[:2])).astype(float)
 
 
-def _extract_accel(line):
-    return np.array(line.strip().split(" GRDATA ")[-1].split(" ")[-3:], dtype="int8")
+def _extract_accel(half):
+    hexa = bytearray.fromhex(half.strip().split("\t")[1].replace(" ", ""))
+    assert len(hexa) == 20, "Invalid data: " + " ".join(hexa)
+    split = hexa[5:10], hexa[10:15], hexa[15:]
+    return np.stack([np.frombuffer(buf, dtype="int8") for buf in split])
 
 
-def _extract_line(line):
-    return _extract_datetime(line), _extract_accel(line)
-
-
-def _arrayify(stream, start, end):
-    times, accels = [], []
-    for time, accel in map(_extract_line, stream):
-        if time < start:
+def _arrayify(stream, start, end, clip=True):
+    times, accels = np.array([]), np.array([np.zeros(3)])
+    for line in stream:
+        half1, half2 = line.strip().split(" rawdata: ")
+        time = _extract_datetime(half1)
+        if clip and time < start:
             continue
-        times.append(time - start)
-        accels.append(accel)
-        if time >= end:
+        acc = _extract_accel(half2)
+        t = time - start
+        times = np.concatenate((times, np.linspace(t, t-50, 5)))
+        accels = np.concatenate((accels, np.stack(acc, axis=1)))
+        if clip and time >= end:
             break
-    return np.array(times), np.array(accels)
+    return times[1:], accels[1:]
 
 
 def _extract_boundaries(lines, left, right):
@@ -44,15 +47,15 @@ def _extract_boundaries(lines, left, right):
     return epoch_start, epoch_end
 
 
-def extract_data(filepath):
-    lines = list(filter(lambda line: "GRDATA" in line or "TRAINER cmd:" in line, open(filepath)))
-    left = list(filter(lambda line: "GRDATA L" in line, lines))
-    right = list(filter(lambda line: "GRDATA R" in line, lines))
+def extract_data(filepath, clip=True):
+    lines = list(filter(lambda line: "rawdata:" in line or "TRAINER cmd:" in line, open(filepath)))
+    left = list(filter(lambda line: "rawdata: LEFT" in line, lines))
+    right = list(filter(lambda line: "rawdata: RIGHT" in line, lines))
 
     epoch_start, epoch_end = _extract_boundaries(lines, left, right)
 
-    ltime, laccel = _arrayify(left, epoch_start, epoch_end)
-    rtime, raccel = _arrayify(right, epoch_start, epoch_end)
+    ltime, laccel = _arrayify(left, epoch_start, epoch_end, clip)
+    rtime, raccel = _arrayify(right, epoch_start, epoch_end, clip)
     return ltime, laccel, rtime, raccel
 
 

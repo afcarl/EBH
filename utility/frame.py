@@ -11,14 +11,14 @@ from .parse import extract_data, pull_annotation
 
 class DataWrapper:
 
-    def __init__(self, source):
+    def __init__(self, source, cliptime=True):
         self.cfg = dict(threshtop=40, threshbot=40, filtersize=3, mindist=10)
         if ".txt" == source[-4:]:
             self.ID = os.path.split(source)[-1].split(".")[0]
             data = extract_data(source)
         else:
             self.ID = source
-            data = extract_data(logroot + "{}.txt".format(source))
+            data = extract_data(logroot + "{}.txt".format(source), clip=cliptime)
         labpath = "{}{}.txt".format(labroot, self.ID)
         if os.path.exists(labpath):
             a = pull_annotation(labpath)
