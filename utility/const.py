@@ -10,4 +10,4 @@ pklroot = projectroot + "pkl/"
 
 labels = "?C0JUH"
 dummy = tuple(range(len(labels)))
-onehot = np.eye(len(dummy))
+onehot = np.eye(len(labels))

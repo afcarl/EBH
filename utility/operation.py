@@ -37,6 +37,7 @@ def as_matrix(X):
 
 def load_dataset(split=0., **kw):
     X, Y = pickle.load(gzip.open(projectroot + "data.pkl.gz"))
+    print("Loaded dataset with labels:", set(Y))
     if kw.get("as_matrix"):
         X = as_matrix(X)
     if kw.get("normalize"):

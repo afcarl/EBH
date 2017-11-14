@@ -11,13 +11,14 @@ indim, outdim = lX.shape[-1], lY.shape[-1]
 print(f"ANN fitting data with dimensionality: {indim} / {outdim}")
 
 ann = Sequential(layers=[
-    Dense(20, input_dim=indim, activation="tanh", kernel_regularizer="l2"),
-    Dense(10, activation="tanh", kernel_regularizer="l2"),
+    Dense(180, input_dim=indim, activation="relu", kernel_regularizer="l2"),
+    Dense(40, activation="relu", kernel_regularizer="l2"),
     Dense(outdim, activation="softmax")
 ])
-ann.compile(optimizer="nadam", loss="categorical_crossentropy", metrics=["acc"])
+ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
 
-history = ann.fit(lX, lY, batch_size=20, epochs=300,
+history = ann.fit(lX, lY, batch_size=32, epochs=200,
                   validation_data=(tX, tY),
                   class_weight="balanced", verbose=False)
+
 plot_learning_dynamics(history)

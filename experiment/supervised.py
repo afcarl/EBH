@@ -1,10 +1,6 @@
 import numpy as np
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.discriminant_analysis import (
-    QuadraticDiscriminantAnalysis as QDA,
-    LinearDiscriminantAnalysis as LDA
-)
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -53,9 +49,8 @@ def run_classical_models():
     for model, name in [
         (ClassifierMock(), "Baseline (Random)"),
         (LogisticRegression(class_weight=w), "Logistic Regression"),
-        (LDA(), "LDA"), (QDA(), "QDA"),
         (GaussianNB(), "Naive Bayes"),
-        (KNeighborsClassifier(), "K-Nearest Neighbours"),
+        (KNeighborsClassifier(weights="distance"), "K-Nearest Neighbours"),
         (RandomForestClassifier(class_weight=w), "Random Forest"),
         (SVC(kernel="linear", class_weight=w), "Linear SVM"),
         (SVC(kernel="rbf", class_weight=w), "RBF-SVM")
@@ -65,4 +60,3 @@ def run_classical_models():
 
 if __name__ == '__main__':
     run_classical_models()
-    # fit_ann()
