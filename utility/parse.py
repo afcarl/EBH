@@ -1,7 +1,6 @@
 import numpy as np
 
 from .const import labels
-from .operation import interpolate_nans
 
 
 # noinspection PyUnresolvedReferences
@@ -11,12 +10,11 @@ def _extract_datetime(half):
 
 def _extract_accel(half, getseq=False):
     hexa = bytearray.fromhex(half.strip().split("\t")[1].replace(" ", ""))
-    assert len(hexa) == 20, "Invalid data: " + " ".join(hexa)
     split = hexa[5:10], hexa[10:15], hexa[15:]
     accel = np.stack([np.frombuffer(buf, dtype="int8") for buf in split], axis=1)
     if not getseq:
         return accel
-    return int(np.frombuffer(hexa[1])), accel
+    return accel, int(np.frombuffer(hexa[1]))
 
 
 def _arrayify_raw(stream, start, end, clip=True):
@@ -26,7 +24,7 @@ def _arrayify_raw(stream, start, end, clip=True):
         time = _extract_datetime(half1)
         if clip and time < start:
             continue
-        sn, acc = _extract_accel(half2, getseq=True)
+        acc, sn = _extract_accel(half2, getseq=True)
         seqnum.append(sn)
         accels.append(acc)
         if clip and time >= end:
@@ -54,20 +52,24 @@ def _arrayify_accumulate(stream, start, end, clip=True):
     return np.concatenate(times), np.concatenate(accels)
 
 
-def _extract_boundaries(lines, left, right):
+def _find_first_data_line(stream):
+    for line in stream:
+        if "rawdata:" in line:
+            return [line]
+    else:
+        raise RuntimeError
+
+
+def _extract_boundaries(lines):
     startline = [line for line in lines if "TRAINER cmd: started;" in line]
-    if startline:
-        epoch_start = _extract_datetime(startline[0])
-    else:
-        print("No startline! Falling back to first rawdata...")
-        epoch_start = min(_extract_datetime(left[0]), _extract_datetime(right[0]))
     endline = [line for line in lines if "remaining = 0\n" == line[-14:]]
-    if endline:
-        epoch_end = _extract_datetime(endline[0])
-    else:
+    if not startline:
+        print("No startline! Falling back to first rawdata...")
+        startline = _find_first_data_line(lines)
+    if not endline:
         print("No endline! Falling back to last rawdata...")
-        epoch_end = max(_extract_datetime(left[-1]), _extract_datetime(right[-1]))
-    return epoch_start, epoch_end
+        endline = _find_first_data_line(lines[::-1])
+    return _extract_datetime(startline[0]), _extract_datetime(endline[0])
 
 
 def extract_data_raw(filepath, clip=True):
@@ -75,7 +77,7 @@ def extract_data_raw(filepath, clip=True):
     left = list(filter(lambda line: "rawdata: LEFT" in line, lines))
     right = list(filter(lambda line: "rawdata: RIGHT" in line, lines))
 
-    epoch_start, epoch_end = _extract_boundaries(lines, left, right)
+    epoch_start, epoch_end = _extract_boundaries(lines)
 
     laccel = _arrayify_raw(left, epoch_start, epoch_end, clip)
     raccel = _arrayify_raw(right, epoch_start, epoch_end, clip)
@@ -83,14 +85,13 @@ def extract_data_raw(filepath, clip=True):
     return np.arange(N), laccel[:N], np.arange(N), raccel[:N]
 
 
-def extract_data(filepath, clip=True, interpolate=False):
-    isleft = lambda l: "rawdata: LEFT" in l
+def extract_data(filepath, clip=True):
+
+    def isleft(logline):
+        return "rawdata: LEFT" in logline
 
     lines = list(filter(lambda l: "rawdata:" in l or "TRAINER cmd:" in l, open(filepath)))
-    left = list(filter(isleft, lines))
-    right = list(filter(lambda l: "rawdata: RIGHT" in l, lines))
-
-    epoch_start, epoch_end = _extract_boundaries(lines, left, right)
+    epoch_start, epoch_end = _extract_boundaries(lines)
 
     times = []
     data = {True: [np.array([0, 0, 0])], False: [np.array([0, 0, 0])]}
@@ -99,11 +100,10 @@ def extract_data(filepath, clip=True, interpolate=False):
         time = _extract_datetime(half1)
         if clip and time < epoch_start:
             continue
-        accs = _extract_accel(half2)
-        acc = accs.mean(axis=0) if interpolate else accs[0]
+        acc = _extract_accel(half2)[0]
         side = isleft(line)
         data[side].append(acc)
-        data[not side].append(np.array([np.nan]*3) if interpolate else data[not side][-1])
+        data[not side].append(data[not side][-1])
         times.append(float(time - epoch_start))
         if clip and time > epoch_end:
             break

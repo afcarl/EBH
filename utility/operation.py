@@ -6,17 +6,6 @@ import numpy as np
 from EBH.utility.const import projectroot, labels, onehot
 
 
-def interpolate_nans(x):
-    out = x.copy()
-    for i, col in enumerate(x.T):
-        nanmask = np.isnan(col)
-        nanarg = np.where(nanmask)
-        okarg = np.where(~nanmask)
-        interp = np.interp(nanarg[0], okarg[0], col[~nanmask])
-        out[nanarg, i] = interp
-    return out
-
-
 def average_filter(series, window=2):
     return np.convolve(series, np.ones(window) / window, mode="same")
 
@@ -72,16 +61,3 @@ def normalize(X, mean=None, std=None, getparam=False):
     std = X.std(axis=0, keepdims=True) if std is None else std
     nX = (X - mean) / std
     return (nX, mean, std) if getparam else nX
-
-
-if __name__ == '__main__':
-    from matplotlib import pyplot as plt
-    x = np.linspace(-5, 5, 100)
-    X = np.stack((x, x), axis=1)
-    X[(10, 20, 30), 0] = np.nan
-    X[(0, 1, 2, 3), 1] = np.nan
-    Y = np.stack([np.sin(X[:, 0]), np.cos(X[:, 1])], axis=1)
-    iY = interpolate_nans(Y)
-    plt.plot(Y, "b-", alpha=0.25)
-    plt.plot(iY, "rx", alpha=0.5)
-    plt.show()

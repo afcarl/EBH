@@ -22,7 +22,7 @@ def inspect_classes():
         for i in range(10):
             names.append(l + str(i))
 
-    X, Y = load_dataset(flatten=True)
+    X, Y = load_dataset(as_matrix=True)
     inspection.category_frequencies(Y)
     inspection.correlation(X, names=names)
     normaltest.full(X, names=names)
@@ -52,19 +52,5 @@ def compare_parsers(onfile):
     # assert not d.sum()
 
 
-def read_counters(onfile):
-    import numpy as np
-    from matplotlib import pyplot as plt
-    from EBH.utility.const import logroot
-    lines = [line for line in open(logroot + onfile).read().split("\n") if "rawdata:" in line]
-    lcount = np.frombuffer(bytearray.fromhex(
-        "".join([line.split("\t")[1].split(" ")[1] for line in lines if "rawdata: LEFT" in line])), "uint8")
-    rcount = np.frombuffer(bytearray.fromhex(
-        "".join([line.split("\t")[1].split(" ")[1] for line in lines if "rawdata: RIGHT" in line])), "uint8")
-    N = min(len(lcount), len(rcount))
-    plt.plot(np.abs(lcount[:N] - rcount[:N]), "r.")
-    plt.show()
-
-
 if __name__ == '__main__':
-    inspect_session("Virginia_le")
+    inspect_classes()
