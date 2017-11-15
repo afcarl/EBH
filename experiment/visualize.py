@@ -8,7 +8,7 @@ from EBH.utility.const import labels
 
 
 def plot_acceleration(dw, show=True, dumppath=None):
-    ltime, ldata, rtime, rdata = dw.data
+    (ltime, ldata), (rtime, rdata) = dw.get_data("left"), dw.get_data("right")
     fig, axarr = plt.subplots(2, 2, figsize=(20, 10))
     for i, (lcol, rcol, ax) in enumerate(zip(ldata.T, rdata.T, axarr.flat[:3]), start=1):
         ax.set_title("Axis {}".format(i))
@@ -69,8 +69,8 @@ def plot_peaks_twoway(time, data, threshtop, threshbot=None, mindist=10, ax=None
     ax.plot(time, np.ones_like(time) * threshtop, "r--")
     ax.plot(time, np.ones_like(time) * -threshbot, "r--")
     if annot:
-        annotate_peaks(time[tpeaks], Y[tpeaks], annot[0], ax=ax)
-        annotate_peaks(time[bpeaks], Y[bpeaks], annot[1], ax=ax)
+        annotate_peaks(time[tpeaks], Y[tpeaks], annot["l"], ax=ax)
+        annotate_peaks(time[bpeaks], Y[bpeaks], annot["r"], ax=ax)
     ax.set_title(title)
     ax.grid()
     return ax

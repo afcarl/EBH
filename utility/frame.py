@@ -6,24 +6,22 @@ import numpy as np
 
 from .peak import find_peaks_subtract
 from .const import logroot, labroot, pklroot
-from .parse import extract_data, pull_annotation
+from .parse import extract_data, extract_data_raw, pull_annotation
 
 
 class DataWrapper:
 
-    def __init__(self, source, cliptime=True):
+    def __init__(self, source, cliptime=True, extract_mode="zolaly"):
         self.cfg = dict(threshtop=40, threshbot=40, filtersize=3, mindist=10)
         if ".txt" == source[-4:]:
             self.ID = os.path.split(source)[-1].split(".")[0]
             data = extract_data(source)
         else:
             self.ID = source
-            data = extract_data(logroot + "{}.txt".format(source), clip=cliptime)
-        labpath = "{}{}.txt".format(labroot, self.ID)
-        if os.path.exists(labpath):
-            a = pull_annotation(labpath)
-        else:
-            a = [None, None, {}]
+            data = {"zolaly": extract_data, "raw": extract_data_raw
+                    }[extract_mode](f"{logroot}{source}.txt", clip=cliptime)
+        labpath = f"{labroot}{self.ID}.txt"
+        a = pull_annotation(labpath) if os.path.exists(labpath) else [None, None, {}]
         self.annot = {"l": a[0], "r": a[1]}
         self.data = {"l": data[:2], "r": data[2:]}
         self.cfg.update(a[2])
