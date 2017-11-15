@@ -107,7 +107,7 @@ def extract_data(filepath, clip=True):
         times.append(float(time - epoch_start))
         if clip and time > epoch_end:
             break
-    return np.array(times), np.array(data[True]), np.array(times), np.array(data[False])
+    return np.array(times), np.array(data[True][1:]), np.array(times), np.array(data[False][1:])
 
 
 def pull_annotation(filepath):

@@ -110,5 +110,5 @@ def plot_peaks_fft(time, data):
 
 
 if __name__ == '__main__':
-    dwrap = DataWrapper("Anita_le", cliptime=False)
+    dwrap = DataWrapper("Robi_le", cliptime=False)
     plot_peaks_subtract(dwrap)

@@ -11,7 +11,7 @@ from EBH.utility.frame import DataWrapper
 def pull_dws():
     out = []
     for logfl in os.listdir(logroot):
-        dw = DataWrapper(logroot + logfl)
+        dw = DataWrapper(logroot + logfl, cliptime=True)
         print("Reading", dw.ID, end="... ")
         if dw.annot["l"] is None or dw.annot["r"] is None:
             print("unlabeled!")

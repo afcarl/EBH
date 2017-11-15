@@ -53,4 +53,4 @@ def compare_parsers(onfile):
 
 
 if __name__ == '__main__':
-    inspect_classes()
+    inspect_session("Robi_le")
