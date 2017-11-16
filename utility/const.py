@@ -3,11 +3,9 @@ import os
 
 projectroot = os.path.expanduser("~/SciProjects/Project_EBH/")
 logroot = projectroot + "log/"
-rawroot = projectroot + "raw/"
-vidroot = projectroot + "vid/"
 labroot = projectroot + "man/"
-pklroot = projectroot + "pkl/"
+ltbroot = projectroot + "ltb/"
 
-labels = "?C0JUH"
-dummy = tuple(range(len(labels)))
-onehot = np.eye(len(labels))
+labels = "JUHC0"
+DEFAULT_DATASET = ltbroot + "default.pkl.gz"
+boxer_names = ("Anita", "Bela", "box1", "box4", "box5", "box6", "Dia", "Robi", "Virginia")

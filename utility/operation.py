@@ -2,8 +2,7 @@ import gzip
 import pickle
 
 import numpy as np
-
-from EBH.utility.const import projectroot, labels, onehot
+from EBH.utility.const import labels, DEFAULT_DATASET
 
 
 def average_filter(series, window=2):
@@ -16,9 +15,19 @@ def shuffle(X, Y, *more):
     return tuple(array[arg] for array in (X, Y) + more)
 
 
+def split_data(X, Y, alpha, shuff=True):
+    arg = np.arange(len(X))
+    if shuff:
+        np.random.shuffle(arg)
+    n = int(len(X) * alpha)
+    larg, targ = arg[n:], arg[:n]
+    return X[larg], Y[larg], X[targ], Y[targ]
+
+
 def as_onehot(Y, categ=None):
-    categ = onehot if categ is None else categ
-    return np.array([categ[ix] for ix in Y])
+    categ = np.unique(Y) if categ is None else categ
+    onehot = np.eye(len(categ))
+    return np.array([onehot[ix] for ix in Y])
 
 
 def as_string(Y, lbls=None):
@@ -35,10 +44,10 @@ def as_matrix(X):
         return X.reshape(X.shape[0], np.prod(X.shape[1:], dtype=int))
 
 
-def load_dataset(split=0., **kw):
-    X, Y = pickle.load(gzip.open(projectroot + "data.pkl.gz"))
-    print("Loaded dataset! Shape:", X.shape, end=" ")
-    print("Labels:", set(Y))
+def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
+    X, Y = pickle.load(gzip.open(path))
+    # print("Loaded dataset! Shape:", X.shape, end=" ")
+    # print("Labels:", set(Y))
     if kw.get("as_matrix"):
         X = as_matrix(X)
     if kw.get("normalize"):
@@ -46,13 +55,9 @@ def load_dataset(split=0., **kw):
     if kw.get("as_string"):
         Y = as_string(Y, kw.get("labels", labels))
     elif kw.get("as_onehot"):
-        Y = as_onehot(Y, kw.get("categ", onehot))
+        Y = as_onehot(Y, kw.get("categ", None))
     if split:
-        arg = np.arange(len(X))
-        np.random.shuffle(arg)
-        n = int(len(X)*split)
-        larg, targ = arg[n:], arg[:n]
-        return X[larg], Y[larg], X[targ], Y[targ]
+        return split_data(X, Y, split)
     return X, Y
 
 

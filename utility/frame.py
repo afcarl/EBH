@@ -1,11 +1,9 @@
 import os
-import gzip
-import pickle
 
 import numpy as np
 
 from .peak import find_peaks_subtract
-from .const import logroot, labroot, pklroot
+from .const import logroot, labroot
 from .parse import extract_data, extract_data_raw, pull_annotation
 
 
@@ -88,11 +86,3 @@ class DataWrapper:
         Y = self.get_annotations(side=None)
         assert len(X) == len(Y), f"Lengths not equal in {self.ID}: X: {X.shape} Y: {Y.shape}"
         return X, Y
-
-    @staticmethod
-    def load(ID):
-        return pickle.load(gzip.open(pklroot + ID))
-
-    def save(self):
-        with gzip.open(pklroot + self.ID) as handle:
-            pickle.dump(self, handle)
