@@ -30,4 +30,4 @@ def plot_transformation2D(transform, X, Y=None):
 
 
 if __name__ == '__main__':
-    plot_transformation2D("t-sne", *load_dataset(as_matrix=True, normalize=True, as_string=True))
+    plot_transformation2D("se", *load_dataset(as_matrix=True, normalize=True, as_string=True))

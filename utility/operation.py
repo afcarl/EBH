@@ -3,6 +3,7 @@ import pickle
 
 import numpy as np
 from EBH.utility.const import labels, DEFAULT_DATASET
+from EBH.utility.const import ltbroot
 
 
 def average_filter(series, window=2):
@@ -59,6 +60,16 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
     if split:
         return split_data(X, Y, split)
     return X, Y
+
+
+def load_testsplit_dataset(boxer, **kw):
+    lkw = dict(as_matrix=kw.get("as_matrix"), as_string=kw.get("as_string"), as_onehot=kw.get("as_onehot"))
+    lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", **lkw)
+    tX, tY = load_dataset(f"{ltbroot}E_{boxer}_testing.pkl.gz", **lkw)
+    if kw.get("normalize"):
+        lX, mu, sigma = normalize(lX, getparam=True)
+        tX = normalize(tX, mu, sigma)
+    return lX, lY, tX, tY
 
 
 def normalize(X, mean=None, std=None, getparam=False):

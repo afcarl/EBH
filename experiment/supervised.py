@@ -1,16 +1,13 @@
 import numpy as np
-
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.discriminant_analysis import (
-    QuadraticDiscriminantAnalysis as QDA
-)
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
-from EBH.utility.operation import load_dataset, split_data
-from EBH.utility.const import ltbroot
+from csxdata.utilities.vectorop import split_by_categories
+
+from EBH.utility.operation import load_testsplit_dataset
+from EBH.utility.const import boxer_names
 
 
 class ClassifierMock:
@@ -25,41 +22,34 @@ class ClassifierMock:
         return np.random.choice(self.categ, size=X.shape[0])
 
 
-def _test_model_crossval(model, modelname, X, Y, repeats=1, split=0.1, verbose=1):
-    acc = np.empty(repeats)
-    for r in range(1, repeats+1):
-        lX, lY, vX, vY = split_data(X, Y, split)
+# noinspection PyTypeChecker
+def split_eval(model, tX, tY):
+    splitarg = split_by_categories(tY)
+    accs = dict()
+    for cat in "JUH":
+        arg = splitarg[cat]
+        accs[cat] = np.mean(model.predict(tX[arg]) == tY[arg])
+    accs["ALL"] = np.mean(model.predict(tX) == tY)
+    return accs
+
+
+def xperiment_leave_one_out(model):
+    accs = []
+    for name in boxer_names:
+        lX, lY, tX, tY = load_testsplit_dataset(name, as_matrix=True, normalize=True, as_string=True)
+        print("-"*50)
+        print(f"{model.__class__.__name__} vs E_{name}")
         model.fit(lX, lY)
-        a = (model.predict(vX) == vY).mean()
-        acc[r-1] = a
-    if verbose:
-        print(f"{modelname} accuracy: {acc.mean():.2%}")
-    return acc.mean()
-
-
-def _test_model_leaveout(model, modelname, verbose=1):
-    lX, lY = load_dataset(ltbroot + "learning.pkl.gz", as_matrix=True, normalize=True)
-    model.fit(lX, lY)
-    tX, tY = load_dataset(ltbroot + "testing.pkl.gz", as_matrix=True, normalize=True)
-    print(f"{modelname} accuracy: {(model.predict(tX) == tY).mean():.2%}")
-
-
-def run_classical_models(test):
-    w = "balanced"
-    svmC = 1.0
-    for model, name in [
-        # (ClassifierMock(), "Baseline (Random)"),
-        # (LogisticRegression(class_weight=w), "Logistic Regression"),
-        # (QDA(), "Quadratic Discriminant Analysis"),
-        # (GaussianNB(), "Naive Bayes"),
-        (KNeighborsClassifier(weights="distance"), "K-Nearest Neighbours"),
-        # (RandomForestClassifier(class_weight=w), "Random Forest"),
-        (SVC(kernel="linear", class_weight=w, C=svmC), "Linear SVM"),
-        (SVC(kernel="rbf", class_weight=w, C=svmC), "RBF-SVM"),
-        (SVC(kernel="poly", degree=4, C=svmC), "Poly (4) SVM")
-    ]:
-        test(model, name)
+        bycat_acc = split_eval(model, tX, tY)
+        for cat in ("J", "U", "H", "ALL"):
+            print(f"{cat}: {bycat_acc[cat]:.2%}")
+        accs.append(bycat_acc["ALL"])
+    print("*"*50)
+    print("TOTAL OVERALL ACCURACIES:", np.mean(accs))
 
 
 if __name__ == '__main__':
-    run_classical_models(test=_test_model_leaveout)
+    xperiment_leave_one_out(SVC(C=0.1, kernel="poly", degree=2, class_weight="balanced"))  # 73%
+    # xperiment_leave_one_out(RandomForestClassifier(n_jobs=4, class_weight="balanced"))  # 67%
+    # xperiment_leave_one_out(KNeighborsClassifier(n_jobs=5))  # 71%
+    # xperiment_leave_one_out(GaussianNB())  # 60%

@@ -106,9 +106,16 @@ def plot_peaks_fft(time, data):
     fY[1000:6500] = 0j
     iY = np.fft.ifft(fY)
     bx.plot(X, iY)
-    plt.show()
 
 
 if __name__ == '__main__':
-    dwrap = DataWrapper("Dia_fel", cliptime=True)
-    plot_peaks_subtract(dwrap)
+    from EBH.utility.const import projectroot
+    dwrap = DataWrapper(projectroot + "Istvan_gestures.txt", cliptime=False)
+    t, d = dwrap.get_data("left")
+    X, Y, Z = d.T
+    fig, (tx, bx) = plt.subplots(2, 1, sharex=True)
+    tx.plot(t, Y)
+    bx.plot(t, X + Z)
+    tx.grid()
+    bx.grid()
+    plt.show()
