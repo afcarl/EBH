@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.utils import compute_class_weight
 
 from keras.models import Sequential, Model
-from keras.layers import BatchNormalization, Dense, Activation, Input, Concatenate
+from keras.layers import BatchNormalization, Dense, Input, Concatenate
 from keras.layers import Conv1D, Flatten, PReLU
 from keras.layers import LSTM as RLayer
 from keras.optimizers import SGD
@@ -39,22 +39,27 @@ def get_hydra_convnet(inshape, outshape):
 
     bn = BatchNormalization()(x)
 
-    c1 = PReLU()(Conv1D(32, kernel_size=3)(bn))  # 8, 32
-    c1 = PReLU()(Conv1D(16, kernel_size=3)(c1))  # 6, 16
-    c1 = PReLU()(Conv1D(8, kernel_size=3)(c1))  # 4, 8
-    c1 = Flatten()(Conv1D(4, kernel_size=3)(c1))  # 2x4 = 8
+    c1 = PReLU()(Conv1D(64, kernel_size=3)(bn))  # 8, 64
+    c1 = BatchNormalization()(c1)
+    c1 = PReLU()(Conv1D(32, kernel_size=3)(c1))  # 6, 32
+    c1 = PReLU()(Conv1D(32, kernel_size=3)(c1))  # 4, 32
+    c1 = Flatten()(Conv1D(16, kernel_size=3)(c1))  # 2x16 = 32
 
-    c2 = PReLU()(Conv1D(16, kernel_size=5)(bn))  # 6, 16
-    c2 = Flatten()(Conv1D(16, kernel_size=5)(c2))  # 2x16 = 32
+    c2 = PReLU()(Conv1D(32, kernel_size=5)(bn))  # 6, 32
+    c2 = BatchNormalization()(c2)
+    c2 = Flatten()(Conv1D(32, kernel_size=5)(c2))  # 2x32 = 64
 
-    c3 = Flatten()(Conv1D(32, kernel_size=7)(bn))  # 2x32 = 64
+    c3 = Flatten()(Conv1D(64, kernel_size=7)(bn))  # 2x64 = 128
 
-    c = BatchNormalization()(PReLU()(Concatenate()([c1, c2, c3])))  # 104
-    d = Dense(60, activation="tanh", kernel_regularizer="l2")(c)  # 60
+    c = BatchNormalization()(PReLU()(Concatenate()([c1, c2, c3])))  # 224
+    d = PReLU()(Dense(80)(c))  # 80
+    d = BatchNormalization(d)
+    d = Dense(12, activation="tanh")(d)  # 12
+    d = BatchNormalization(d)
     o = Dense(outshape[0], activation="softmax")(d)
 
     ann = Model(inputs=x, outputs=o, name="Hydra")
-    ann.compile(optimizer=SGD(momentum=0.9), loss="categorical_crossentropy", metrics=["acc"])
+    ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
     return ann
 
 
