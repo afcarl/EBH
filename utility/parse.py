@@ -100,11 +100,18 @@ def extract_data(filepath, clip=True):
     return np.array(times), data
 
 
+def _rmstr(string, *sstrings):
+    output = string[:]
+    for ss in sstrings:
+        output = output.replace(ss, "")
+    return output
+
+
 def pull_annotation(filepath):
     with open(filepath) as handle:
-        config, left, right = handle.read().replace(" ", "").split("\n")[:3]
+        config, left, right = _rmstr(handle.read(), " ", "?").split("\n")[:3]
     cfg = [tuple(c.split("-")) for c in config.split(":")[-1].split(";")]
     cfg = {k.strip(): int(v) for k, v in cfg}
-    left = np.array([labels.index(l) for l in left.split(":")[-1] if l != "?"])
-    right = np.array([labels.index(l) for l in right.split(":")[-1] if l != "?"])
+    left = np.array([labels.index(l) for l in left.split(":")[-1]])
+    right = np.array([labels.index(l) for l in right.split(":")[-1]])
     return left, right, cfg

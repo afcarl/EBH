@@ -1,8 +1,10 @@
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis as QDA
+from sklearn.neural_network import MLPClassifier
 
 from csxdata.utilities.vectorop import split_by_categories
 
@@ -49,7 +51,9 @@ def xperiment_leave_one_out(model):
 
 
 if __name__ == '__main__':
-    xperiment_leave_one_out(SVC(C=0.1, kernel="poly", degree=2, class_weight="balanced"))  # 73%
+    # xperiment_leave_one_out(SVC(C=0.1, kernel="poly", degree=2, class_weight="balanced"))  # 73%
     # xperiment_leave_one_out(RandomForestClassifier(n_jobs=4, class_weight="balanced"))  # 67%
     # xperiment_leave_one_out(KNeighborsClassifier(n_jobs=5))  # 71%
     # xperiment_leave_one_out(GaussianNB())  # 60%
+    # xperiment_leave_one_out(QDA())
+    xperiment_leave_one_out(MLPClassifier(verbose=False, warm_start=True, learning_rate_init=0.1))

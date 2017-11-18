@@ -1,5 +1,6 @@
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.optimizers import Nadam
 
 from csxdata.utilities.vectorop import split_by_categories
 
@@ -11,11 +12,10 @@ from EBH.utility.visual import plot_learning_dynamics
 def build_ann(indim, outdim):
     # print(f"Building ANN for data with dimensionality: {indim} / {outdim}")
     ann = Sequential(layers=[
-        Dense(120, input_dim=indim, activation="tanh", kernel_regularizer="l2"),
-        Dense(60, activation="tanh", kernel_regularizer="l2"),
-        Dense(outdim, activation="softmax", kernel_regularizer="l2")
+        Dense(100, input_dim=indim, activation="relu"),
+        Dense(outdim, activation="softmax")
     ])
-    ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
+    ann.compile(optimizer=Nadam(0.1), loss="categorical_crossentropy", metrics=["acc"])
     return ann
 
 

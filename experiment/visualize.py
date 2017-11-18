@@ -112,5 +112,5 @@ def plot_peaks_fft(dw):
 
 
 if __name__ == '__main__':
-    dwrap = DataWrapper("box1_fel", cliptime=True)
+    dwrap = DataWrapper("box1_fel", cliptime=False)
     plot_peaks_subtract(dwrap)
