@@ -34,7 +34,7 @@ def find_peaks(data, threshold=75, peaksize=10, mindist=10):
 
 def find_peaks_subtract(dw, threshtop=50, threshbot=None, filtersize=0, peaksize=10, mindist=10):
     threshbot = threshtop if threshbot is None else threshbot
-    left = dw.get_data("left", norm=True)[-1] - dw.get_data("right", norm=True)[-1]
+    left = dw.get_data("left", norm=True) - dw.get_data("right", norm=True)
     if filtersize > 1:
         left = average_filter(left, window=filtersize)
     top = find_peaks(data=left, threshold=threshtop, peaksize=peaksize, mindist=mindist)

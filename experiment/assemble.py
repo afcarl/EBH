@@ -13,7 +13,7 @@ def dwstream(exclude=(), include_only="all"):
     included = files if include_only == "all" else [f + ".txt" for f in include_only]
     for logfl in included:
         dw = DataWrapper(logroot + logfl, cliptime=True)
-        if dw.annot["l"] is None or dw.annot["r"] is None:
+        if not dw.is_annotated:
             print("Skipping unlabelled data:", dw.ID)
             continue
         if dw.ID in exclude:
@@ -26,7 +26,14 @@ def _assemble_data(dws, mergehplane=False, augment=True):
     Xs, Ys = [], []
     for dw in dws:  # type: DataWrapper
         print("Extracting", dw.ID)
-        x, y = dw.get_learning_table(peaksize=10)
+        y = np.r_[dw.get_annotations()]
+        if augment:
+            x = np.concatenate([
+                np.concatenate(dw.get_peaks(readingframe=f, center=False)) for f in range(5)
+            ])
+            y = np.repeat(np.r_[dw.get_annotations()], 5)
+        else:
+            x = np.r_[dw.get_peaks(readingframe=0, center=False)]
         if len(x) != len(y):
             print("Possibly unfinished annotation (x/y lengths differ). Skipping!")
             continue

@@ -72,42 +72,32 @@ def _extract_boundaries(lines):
     return _extract_datetime(startline[0]), _extract_datetime(endline[0])
 
 
-def extract_data_raw(filepath, clip=True):
-    lines = list(filter(lambda line: "rawdata:" in line or "TRAINER cmd:" in line, open(filepath)))
-    left = list(filter(lambda line: "rawdata: LEFT" in line, lines))
-    right = list(filter(lambda line: "rawdata: RIGHT" in line, lines))
-
-    epoch_start, epoch_end = _extract_boundaries(lines)
-
-    laccel = _arrayify_raw(left, epoch_start, epoch_end, clip)
-    raccel = _arrayify_raw(right, epoch_start, epoch_end, clip)
-    N = min(len(laccel), len(raccel))
-    return np.arange(N), laccel[:N], np.arange(N), raccel[:N]
+def _isleft(logline):
+    return "rawdata: LEFT" in logline
 
 
 def extract_data(filepath, clip=True):
 
-    def isleft(logline):
-        return "rawdata: LEFT" in logline
-
     lines = list(filter(lambda l: "rawdata:" in l or "TRAINER cmd:" in l, open(filepath)))
     epoch_start, epoch_end = _extract_boundaries(lines)
 
+    # Data dim: [side (0, 1); N; rframe (0...4); axes (X, Y, Z)]
     times = []
-    data = {True: [np.array([0, 0, 0])], False: [np.array([0, 0, 0])]}
+    data = {True: [np.zeros((5, 3))], False: [np.zeros((5, 3))]}
     for line in filter(lambda l: "rawdata:" in l, lines):
         half1, half2 = line.strip().split(" rawdata: ")
         time = _extract_datetime(half1)
         if clip and time < epoch_start:
             continue
-        acc = _extract_accel(half2)[0]
-        side = isleft(line)
+        acc = _extract_accel(half2)  # [rframe (0...4); axes (X, Y, Z)]
+        side = _isleft(line)
         data[side].append(acc)
         data[not side].append(data[not side][-1])
         times.append(float(time - epoch_start))
         if clip and time > epoch_end:
             break
-    return np.array(times), np.array(data[True][1:]), np.array(times), np.array(data[False][1:])
+    data = np.stack((np.stack(data[True][1:]), np.stack(data[False][1:])))
+    return np.array(times), data
 
 
 def pull_annotation(filepath):

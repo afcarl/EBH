@@ -8,15 +8,16 @@ from EBH.utility.const import labels
 
 
 def plot_acceleration(dw, show=True, dumppath=None):
-    (ltime, ldata), (rtime, rdata) = dw.get_data("left"), dw.get_data("right")
+    ldata, rdata = dw.get_data("left", 0), dw.get_data("right", 0)
+    time = dw.time
     fig, axarr = plt.subplots(2, 2, figsize=(20, 10))
     for i, (lcol, rcol, ax) in enumerate(zip(ldata.T, rdata.T, axarr.flat[:3]), start=1):
         ax.set_title("Axis {}".format(i))
-        ax.plot(ltime, lcol)
-        ax.plot(rtime, rcol)
+        ax.plot(time, lcol)
+        ax.plot(time, rcol)
         ax.grid()
-    axarr[-1, -1].plot(ltime, np.linalg.norm(ldata, axis=1), label="Left")
-    axarr[-1, -1].plot(rtime, np.linalg.norm(rdata, axis=1), label="Right")
+    axarr[-1, -1].plot(time, np.linalg.norm(ldata, axis=1), label="Left")
+    axarr[-1, -1].plot(time, np.linalg.norm(rdata, axis=1), label="Right")
     axarr[-1, -1].set_title("Vector size (L2 norm)")
     axarr[-1, -1].grid()
     plt.suptitle("Time vs. signal intensity")
@@ -69,8 +70,8 @@ def plot_peaks_twoway(time, data, threshtop, threshbot=None, mindist=10, ax=None
     ax.plot(time, np.ones_like(time) * threshtop, "r--")
     ax.plot(time, np.ones_like(time) * -threshbot, "r--")
     if annot:
-        annotate_peaks(time[tpeaks], Y[tpeaks], annot["l"], ax=ax)
-        annotate_peaks(time[bpeaks], Y[bpeaks], annot["r"], ax=ax)
+        annotate_peaks(time[tpeaks], Y[tpeaks], annot[0], ax=ax)
+        annotate_peaks(time[bpeaks], Y[bpeaks], annot[1], ax=ax)
     ax.set_title(title)
     ax.grid()
     return ax
@@ -80,23 +81,25 @@ def plot_peaks_twoway(time, data, threshtop, threshbot=None, mindist=10, ax=None
 def plot_peaks_subtract(dw):
     filtersize, mindist = dw.cfg["filtersize"], dw.cfg["mindist"]
     threshtop, threshbot = dw.cfg["threshtop"], dw.cfg["threshbot"]
-    time, nl = dw.get_data("left", norm=True)
-    nr = dw.get_data("right", norm=True)[-1]
+    nl = dw.get_data("left", 0, norm=True)
+    nr = dw.get_data("right", 0, norm=True)
     left = nl - nr
+
     lY = average_filter(left, filtersize) if filtersize > 1 else left
     _, (tx, bx) = plt.subplots(2, 1, sharex=True)
-    plot_peaks_twoway(time, left, threshtop, threshbot, mindist=mindist, ax=tx,
+    plot_peaks_twoway(dw.time, left, threshtop, threshbot, mindist=mindist, ax=tx,
                       title="UNFILT")
-    plot_peaks_twoway(time, lY, threshtop, threshbot, mindist=mindist, ax=bx,
-                      title=f"FILT ({filtersize})", annot=dw.annot)
+    plot_peaks_twoway(dw.time, lY, threshtop, threshbot, mindist=mindist, ax=bx,
+                      title=f"FILT ({filtersize})", annot=(dw.get_annotations("left"),
+                                                           dw.get_annotations("right")))
     plt.suptitle(dw.ID)
     plt.get_current_fig_manager().window.showMaximized()
     plt.subplots_adjust(top=0.8, bottom=0.041, left=0.033, right=0.99, hspace=0.093, wspace=0.2)
     plt.show()
 
 
-def plot_peaks_fft(time, data):
-    Y = np.linalg.norm(data, axis=1)
+def plot_peaks_fft(dw):
+    Y = dw.get_data("left", 0, norm=True)
     X = np.arange(1, len(Y)+1)
     fY = np.fft.fft(Y)
     fig, (tx, mx, bx) = plt.subplots(3, 1)
@@ -109,13 +112,5 @@ def plot_peaks_fft(time, data):
 
 
 if __name__ == '__main__':
-    from EBH.utility.const import projectroot
-    dwrap = DataWrapper(projectroot + "Istvan_gestures.txt", cliptime=False)
-    t, d = dwrap.get_data("left")
-    X, Y, Z = d.T
-    fig, (tx, bx) = plt.subplots(2, 1, sharex=True)
-    tx.plot(t, Y)
-    bx.plot(t, X + Z)
-    tx.grid()
-    bx.grid()
-    plt.show()
+    dwrap = DataWrapper("box1_fel", cliptime=True)
+    plot_peaks_subtract(dwrap)
