@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.utils import compute_class_weight
 
 from keras.models import Sequential, Model
-from keras.layers import BatchNormalization, Dense, Input, Concatenate
+from keras.layers import BatchNormalization, Dense, Input, Concatenate, Dropout
 from keras.layers import Conv1D, Flatten, PReLU, Activation, MaxPooling1D
 from keras.layers import LSTM as RLayer
 from keras.optimizers import Adam
@@ -23,13 +23,14 @@ def get_shaped_data(boxer="Virginia"):
 def get_simple_convnet(inshape, outshape):
     ann = Sequential(layers=[
         BatchNormalization(input_shape=inshape),
-        Conv1D(24, kernel_size=5, kernel_regularizer="l2"), Activation("relu"),  # 6
-        Conv1D(12, kernel_size=3, kernel_regularizer="l2"),  # 4
-        MaxPooling1D(), Flatten(), Activation("relu"),  # 2 x 8 = 16
-        Dense(30, activation="relu", kernel_regularizer="l2"), BatchNormalization(),
-        Dense(outshape[0], activation="softmax", kernel_regularizer="l2")
+        Conv1D(64, kernel_size=3), Activation("relu"), Dropout(0.7),  # 8
+        Conv1D(64, kernel_size=3), Activation("relu"), Dropout(0.7), # 6
+        Conv1D(64, kernel_size=3),  # 4
+        MaxPooling1D(), Flatten(), Activation("relu"), Dropout(0.7),  # 2 x64 = 128
+        Dense(60, activation="relu"), BatchNormalization(), Dropout(0.5),
+        Dense(outshape[0], activation="softmax")
     ])
-    ann.compile(optimizer="nadam", loss="categorical_crossentropy", metrics=["acc"])
+    ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
     return ann
 
 
@@ -84,7 +85,7 @@ def get_lstm(inshape, outshape):
 
 
 def xperiment():
-    lX, lY, tX, tY = get_shaped_data("Virginia")
+    lX, lY, tX, tY = get_shaped_data("Anita")
     cls = np.unique(lY.argmax(axis=1))
     w = compute_class_weight("balanced", cls, lY.argmax(axis=1))
     net = get_simple_convnet(lX.shape[1:], lY.shape[1:])

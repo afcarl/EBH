@@ -105,5 +105,5 @@ def build_leave_one_out_datasets(include_labels="JHU", mergehplane=False, augmen
 
 
 if __name__ == '__main__':
-    build_leave_one_out_datasets(mergehplane=True, augment=False)
+    build_leave_one_out_datasets(mergehplane=False, augment=False)
     # merge_dws()
