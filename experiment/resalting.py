@@ -12,7 +12,7 @@ def salt_data(X1, Y1, X2, Y2, ratio):
 
 
 data = load_testsplit_dataset("Virginia", as_matrix=True, as_string=True)
-for r in np.arange(0.01, 1., 0.01):
+for r in np.arange(0.00, 1., 0.01):
     lX, lY, tX, tY = salt_data(*data, ratio=r)
     knn = KNeighborsClassifier().fit(lX, lY)
     print(f"KNN vs {len(data[2])-len(tY)} salted data: {(knn.predict(tX) == tY).mean():.2%}")

@@ -6,11 +6,11 @@ from keras.layers import BatchNormalization, Dense, Input, Concatenate
 from keras.layers import Conv1D, Flatten, Activation, MaxPooling1D
 from keras.layers import LSTM
 from keras.optimizers import Adam
-
-from csxdata.visual.confusion import plot_confmatrix
+from keras.utils import plot_model
 
 from EBH.utility.operation import load_testsplit_dataset
 from EBH.utility.visual import plot_learning_dynamics
+from EBH.utility.const import projectroot
 
 
 def get_shaped_data(boxer="Virginia"):
@@ -51,7 +51,7 @@ def get_hydra_network(inshape, outshape):
 
     bn = BatchNormalization()(x)
 
-    rec = BatchNormalization()(LSTM(60, activation="relu", return_sequences=True)(x))
+    rec = BatchNormalization()(LSTM(60, activation="relu", return_sequences=True)(bn))
     rec = LSTM(60, activation="linear")(rec)
 
     c1 = Activation("relu")(Conv1D(64, kernel_size=3)(bn))  # 8, 64
@@ -76,7 +76,8 @@ def get_hydra_network(inshape, outshape):
     o = Dense(outshape[0], activation="softmax")(d)
 
     ann = Model(inputs=x, outputs=o, name="Hydra")
-    ann.compile(optimizer=Adam(0.1), loss="categorical_crossentropy", metrics=["acc"])
+    ann.compile(optimizer=Adam(0.001), loss="categorical_crossentropy", metrics=["acc"])
+    plot_model(ann, to_file=projectroot + "Hydra.png")
     return ann
 
 
@@ -99,7 +100,6 @@ def xperiment():
     net = get_hydra_network(lX.shape[1:], lY.shape[1:])
     history = net.fit(lX, lY, batch_size=180, epochs=100, verbose=True, validation_data=(tX, tY),
                       class_weight=w)
-    plot_confmatrix(tX, tY, net)
     plot_learning_dynamics(history)
 
 

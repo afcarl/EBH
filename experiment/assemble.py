@@ -42,8 +42,8 @@ def assemble_data(dws=None, mergehplane=False, augment=False, peaksize=10, inclu
         Ys.append(y)
     X, Y = np.concatenate(Xs), np.concatenate(Ys)
     if mergehplane:
-        x, y, z = np.split(X, 3, axis=-1)
-        p = (x + z) / 2.
+        y = X[:, :, 1]
+        p = np.linalg.norm(X, axis=2)
         if augment:
             y = np.concatenate((y, -y))
             p = np.concatenate((p, p))
