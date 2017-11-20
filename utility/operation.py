@@ -45,10 +45,21 @@ def as_matrix(X):
         return X.reshape(X.shape[0], np.prod(X.shape[1:], dtype=int))
 
 
+def drop_category(X, Y, categ, m):
+    arg, = np.where(Y == categ)
+    m = len(arg) // 2 if m is True else m
+    np.random.shuffle(arg)
+    drops = arg[:m]
+    mask = np.ones(len(X), dtype=bool)
+    mask[drops] = False
+    return X[mask], Y[mask]
+
+
 def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
     X, Y = pickle.load(gzip.open(path))
-    # print("Loaded dataset! Shape:", X.shape, end=" ")
-    # print("Labels:", set(Y))
+    dropJ = kw.get("dropJ")
+    if dropJ:
+        X, Y = drop_category(X, Y, 0, dropJ)
     if kw.get("as_matrix"):
         X = as_matrix(X)
     if kw.get("normalize"):
@@ -63,7 +74,8 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
 
 
 def load_testsplit_dataset(boxer, **kw):
-    lkw = dict(as_matrix=kw.get("as_matrix"), as_string=kw.get("as_string"), as_onehot=kw.get("as_onehot"))
+    lkw = dict(as_matrix=kw.get("as_matrix"), as_string=kw.get("as_string"),
+               as_onehot=kw.get("as_onehot"), dropJ=kw.get("dropJ"))
     lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", **lkw)
     tX, tY = load_dataset(f"{ltbroot}E_{boxer}_testing.pkl.gz", **lkw)
     if kw.get("normalize"):
