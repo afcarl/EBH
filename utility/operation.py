@@ -47,7 +47,7 @@ def as_matrix(X):
 
 def drop_category(X, Y, categ, m):
     arg, = np.where(Y == categ)
-    m = len(arg) // 2 if m is True else m
+    m = len(arg) if m is True else m
     np.random.shuffle(arg)
     drops = arg[:m]
     mask = np.ones(len(X), dtype=bool)
@@ -62,8 +62,12 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
         X, Y = drop_category(X, Y, 0, dropJ)
     if kw.get("as_matrix"):
         X = as_matrix(X)
+    if kw.get("mxnormalize"):
+        X /= 128.
     if kw.get("normalize"):
         X = normalize(X)
+    if kw.get("as_matrix"):
+        X = decorrelate(X)
     if kw.get("as_string"):
         Y = as_string(Y, kw.get("labels", labels))
     elif kw.get("as_onehot"):
@@ -73,14 +77,25 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
     return X, Y
 
 
+# noinspection PyCallingNonCallable
 def load_testsplit_dataset(boxer, **kw):
     lkw = dict(as_matrix=kw.get("as_matrix"), as_string=kw.get("as_string"),
                as_onehot=kw.get("as_onehot"), dropJ=kw.get("dropJ"))
     lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", **lkw)
     tX, tY = load_dataset(f"{ltbroot}E_{boxer}_testing.pkl.gz", **lkw)
+    if kw.get("mxnormalize"):
+        lX /= 128.
+        tX /= 128.
     if kw.get("normalize"):
         lX, mu, sigma = normalize(lX, getparam=True)
         tX = normalize(tX, mu, sigma)
+    if kw.get("decorrelate"):
+        lX, pca = decorrelate(lX, getmodel=True)
+        tX = decorrelate(tX, pca)
+    ytr = kw.get("y_transform")
+    if ytr is not None:
+        lX[:, 1] = ytr(lX[:, 1])
+        tX[:, 1] = ytr(tX[:, 1])
     return lX, lY, tX, tY
 
 
@@ -89,3 +104,10 @@ def normalize(X, mean=None, std=None, getparam=False):
     std = X.std(axis=0, keepdims=True) if std is None else std
     nX = (X - mean) / std
     return (nX, mean, std) if getparam else nX
+
+
+def decorrelate(X, model=None, getmodel=False):
+    from sklearn.decomposition import PCA
+    model = PCA(whiten=True) if model is None else model
+    lX = model.fit_transform(X)
+    return (lX, model) if getmodel else lX

@@ -26,15 +26,8 @@ def assemble_data(dws=None, mergehplane=False, augment=False, peaksize=10, inclu
     dws = dwstream() if dws is None else dws
     Xs, Ys = [], []
     for dw in dws:  # type: DataWrapper
-        print("Extracting", dw.ID)
-        y = np.r_[dw.get_annotations()]
-        if augment:
-            x = np.concatenate([
-                np.concatenate(dw.get_peaks(peaksize, readingframe=f, center=False)) for f in range(5)
-            ])
-            y = np.repeat(np.r_[dw.get_annotations()], 5)
-        else:
-            x = np.r_[dw.get_peaks(peaksize, readingframe=0, center=False)]
+        # print("Extracting", dw.ID)
+        x, y = dw.get_learning_table(peaksize)
         if len(x) != len(y):
             print("Possibly unfinished annotation (x/y lengths differ). Skipping!")
             continue
@@ -48,7 +41,7 @@ def assemble_data(dws=None, mergehplane=False, augment=False, peaksize=10, inclu
             y = np.concatenate((y, -y))
             p = np.concatenate((p, p))
             Y = np.concatenate((Y, Y))
-        X = np.concatenate((p, y), axis=-1)
+        X = np.stack((p, y), axis=-1)
     return filter_classes(X, Y, include=includeclass)
 
 
@@ -63,11 +56,10 @@ def filter_classes(X, Y, include):
 def _dump_dataset(X, Y, path=DEFAULT_DATASET):
     with gzip.open(path, "wb") as handle:
         pickle.dump((X, Y), handle)
-    print("Dumped dataset to", path)
 
 
 def merge_dws(include="JHU", mergehplane=False, augment=False):
-    X, Y = assemble_data(dwstream(), mergehplane, augment, includeclass=include)
+    X, Y = assemble_data(dwstream(), mergehplane, augment, includeclass=include, peaksize=PEAKSIZE)
     print("Final extracted X:", X.shape)
     print("Final extracted Y:", Y.shape)
     _dump_dataset(X, Y)
@@ -75,10 +67,12 @@ def merge_dws(include="JHU", mergehplane=False, augment=False):
 
 def separate_sessions(separated=(), include_labels="JHU", mergehplane=False, augment=False):
     lX, lY = assemble_data(
-        dwstream(exclude=separated), mergehplane=mergehplane, augment=augment, includeclass=include_labels
+        dwstream(exclude=separated), mergehplane=mergehplane, augment=augment,
+        includeclass=include_labels, peaksize=PEAKSIZE
     )
     tX, tY = assemble_data(
-        dwstream(include_only=separated), mergehplane=mergehplane, augment=augment, includeclass=include_labels
+        dwstream(include_only=separated), mergehplane=mergehplane, augment=augment,
+        includeclass=include_labels, peaksize=PEAKSIZE
     )
     print("Assembled learning X:", lX.shape)
     print("Assembled learning Y:", lY.shape)
@@ -98,14 +92,22 @@ def build_leave_one_out_datasets(include_labels="JHU", mergehplane=False, augmen
     N = len(boxer_names)
     for i, name in enumerate(boxer_names, start=1):
         print(f"Building dataset - excluded: {name} ({i}/{N})")
-        lX, lY = filter_classes(*assemble_data(
-            (dw for dw in dws if name not in dw.ID), mergehplane=mergehplane, augment=augment), include=include_labels)
+        lX, lY = assemble_data(
+            (dw for dw in dws if name not in dw.ID),
+            mergehplane=mergehplane, augment=augment, includeclass=include_labels, peaksize=PEAKSIZE
+        )
         _dump_dataset(lX, lY, path=ltbroot + f"E_{name}_learning.pkl.gz")
-        tX, tY = filter_classes(*assemble_data(
-            (dw for dw in dws if name in dw.ID), mergehplane=mergehplane, augment=augment), include=include_labels)
+
+        tX, tY = assemble_data(
+            (dw for dw in dws if name in dw.ID),
+            mergehplane=mergehplane, augment=augment, includeclass=include_labels, peaksize=PEAKSIZE
+        )
         _dump_dataset(tX, tY, path=ltbroot + f"E_{name}_testing.pkl.gz")
 
 
+PEAKSIZE = 10
+
+
 if __name__ == '__main__':
-    build_leave_one_out_datasets(mergehplane=False, augment=False)
-    # merge_dws()
+    build_leave_one_out_datasets(mergehplane=True, augment=False)
+    merge_dws(mergehplane=True, augment=False)

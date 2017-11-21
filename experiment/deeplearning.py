@@ -25,11 +25,9 @@ def get_shaped_data(boxer="Virginia"):
 def get_simple_convnet(inshape, outshape):
     ann = Sequential(layers=[
         BatchNormalization(input_shape=inshape),
-        Conv1D(64, kernel_size=3), Activation("relu"), BatchNormalization(),  # 8
-        Conv1D(64, kernel_size=3), Activation("relu"), BatchNormalization(),  # 6
-        Conv1D(64, kernel_size=3),  # 4
-        MaxPooling1D(), Flatten(), Activation("relu"), BatchNormalization(),  # 2 x64 = 128
-        # Dense(12, activation="relu"), BatchNormalization(),
+        Conv1D(8, kernel_size=3), Activation("relu"), BatchNormalization(),  # 8
+        MaxPooling1D(), Flatten(), Activation("relu"), BatchNormalization(),  # 4 x 8 = 32
+        Dense(12, activation="relu"), BatchNormalization(),
         Dense(outshape[0], activation="softmax")
     ])
     ann.compile(optimizer=Adam(lr=0.1), loss="categorical_crossentropy", metrics=["acc"])
@@ -97,7 +95,7 @@ def xperiment():
     lX, lY, tX, tY = get_shaped_data("Virginia")
     cls = np.unique(lY.argmax(axis=1))
     w = compute_class_weight("balanced", cls, lY.argmax(axis=1))
-    net = get_hydra_network(lX.shape[1:], lY.shape[1:])
+    net = get_simple_convnet(lX.shape[1:], lY.shape[1:])
     history = net.fit(lX, lY, batch_size=180, epochs=100, verbose=True, validation_data=(tX, tY),
                       class_weight=w)
     plot_learning_dynamics(history)

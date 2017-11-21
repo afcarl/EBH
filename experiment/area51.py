@@ -1,4 +1,4 @@
-from EBH.utility.operation import load_dataset
+from EBH.utility.operation import load_dataset, decorrelate
 from EBH.utility.frame import DataWrapper
 
 
@@ -18,11 +18,13 @@ def inspect_classes():
     from csxdata.stats import normaltest, inspection
     from csxdata.visual.histogram import fullplot
     names = []
-    for l in "XYZ":
+    for l in "YP":
         for i in range(10):
             names.append(l + str(i))
 
-    X, Y = load_dataset(as_matrix=True)
+    X, Y = load_dataset(as_matrix=False, as_string=True)
+    X = decorrelate(X.transpose(0, 2, 1).reshape(X.shape[0], X.shape[1] * X.shape[2]))
+
     inspection.category_frequencies(Y)
     inspection.correlation(X, names=names)
     normaltest.full(X, names=names)
@@ -53,4 +55,4 @@ def compare_parsers(onfile):
 
 
 if __name__ == '__main__':
-    inspect_session("Toni_fel")
+    inspect_classes()

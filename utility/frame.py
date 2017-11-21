@@ -83,8 +83,24 @@ class DataWrapper:
             return self._annot["l"], self._annot["r"]
         return self._annot.get(str(side).lower()[0])
 
-    def get_learning_table(self, peaksize=10):
-        X = np.concatenate(self.get_peaks(peaksize, center=False))
-        Y = self.get_annotations(side=None)
-        assert len(X) == len(Y), f"Lengths not equal in {self.ID}: X: {X.shape} Y: {Y.shape}"
+    def get_learning_table(self, peaksize=10, readingframe=0):
+
+        def dropboundary(pt, pb, at, ab, phs, mxln):
+            tnope = np.logical_or(pt-phs < 0, pt+phs > mxln)
+            bnope = np.logical_or(pb-phs < 0, pb+phs > mxln)
+            return pt[~tnope], at[~tnope], pb[~bnope], ab[~bnope]
+
+        toparg, botarg = find_peaks_subtract(
+            self, threshtop=self.cfg["threshtop"], threshbot=self.cfg["threshbot"],
+            filtersize=self.cfg["filtersize"], mindist=self.cfg["mindist"],
+            peaksize=10
+        )
+        hsize = peaksize // 2
+        topY, botY = self.get_annotations(side=None)
+        top, bot = self.get_data("left", readingframe), self.get_data("right", readingframe)
+        toparg, topY, botarg, botY = dropboundary(toparg, botarg, topY, botY, peaksize//2, len(top)-1)
+        topX = np.array([top[p-hsize:p+hsize] for p in toparg])
+        botX = np.array([bot[p-hsize:p+hsize] for p in botarg])
+        X, Y = np.r_[topX, botX], np.r_[topY, botY]
+        assert len(X) == len(Y)
         return X, Y
