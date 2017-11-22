@@ -35,7 +35,7 @@ def assemble_data(dws=None, mergehplane=False, augment=False, peaksize=10, inclu
         Ys.append(y)
     X, Y = np.concatenate(Xs), np.concatenate(Ys)
     if mergehplane:
-        y = X[:, :, 1]
+        y = X[:, :, 2]
         p = np.linalg.norm(X, axis=2)
         if augment:
             y = np.concatenate((y, -y))
@@ -105,7 +105,7 @@ def build_leave_one_out_datasets(include_labels="JHU", mergehplane=False, augmen
         _dump_dataset(tX, tY, path=ltbroot + f"E_{name}_testing.pkl.gz")
 
 
-PEAKSIZE = 10
+PEAKSIZE = 20
 
 
 if __name__ == '__main__':

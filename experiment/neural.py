@@ -1,9 +1,9 @@
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 
 from csxdata.utilities.vectorop import split_by_categories
 
-from EBH.utility.const import labels, ltbroot, boxer_names
+from EBH.utility.const import labels, boxer_names
 from EBH.utility.operation import load_dataset, load_testsplit_dataset
 from EBH.utility.visual import plot_learning_dynamics
 
@@ -11,8 +11,8 @@ from EBH.utility.visual import plot_learning_dynamics
 def build_ann(indim, outdim):
     # print(f"Building ANN for data with dimensionality: {indim} / {outdim}")
     ann = Sequential(layers=[
-        Dense(12, input_dim=indim, activation="tanh", kernel_regularizer="l2"),
-        Dense(12, input_dim=indim, activation="tanh", kernel_regularizer="l2"),
+        Dense(64, input_dim=indim, activation="relu"), Dropout(0.5),
+        Dense(64, input_dim=indim, activation="tanh"), Dropout(0.5),
         Dense(outdim, activation="softmax")
     ])
     ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
@@ -48,18 +48,18 @@ def split_experiment(learn_on_me, test_on_me, plot=True, verbose=1):
 
 
 def basic_validation():
-    lX, lY, vX, vY = load_dataset(split=0.1, as_matrix=True, as_onehot=True, mxnormalize=True)
+    lX, lY, vX, vY = load_dataset(split=0.1, as_matrix=True, as_onehot=True, optimalish=True)
     split_experiment(learn_on_me=(lX, lY), test_on_me=(vX, vY))
 
 
 def basic_testing(boxer="Bela"):
-    lX, lY, tX, tY = load_testsplit_dataset(boxer, mxnormalize=True, as_onehot=True, as_matrix=True)
+    lX, lY, tX, tY = load_testsplit_dataset(boxer, as_onehot=True, optimalish=True)
     split_experiment(learn_on_me=(lX, lY), test_on_me=(tX, tY))
 
 
 def advanced_testing():
     for name in boxer_names:
-        lX, lY, tX, tY = load_testsplit_dataset(name, as_onehot=True, as_matrix=True)
+        lX, lY, tX, tY = load_testsplit_dataset(name, as_onehot=True, as_matrix=True, optimalish=True)
         bycat_acc = split_experiment((lX, lY), (tX, tY), plot=False, verbose=0)
         print("-"*50)
         print("Split evaluation on excluded sample:", name)

@@ -2,19 +2,17 @@ import numpy as np
 from sklearn.utils import compute_class_weight
 
 from keras.models import Sequential, Model
-from keras.layers import BatchNormalization, Dense, Input, Concatenate
+from keras.layers import BatchNormalization, Dense, Input, Concatenate, Dropout
 from keras.layers import Conv1D, Flatten, Activation, MaxPooling1D
 from keras.layers import LSTM
 from keras.optimizers import Adam
-from keras.utils import plot_model
 
 from EBH.utility.operation import load_testsplit_dataset
 from EBH.utility.visual import plot_learning_dynamics
-from EBH.utility.const import projectroot
 
 
 def get_shaped_data(boxer="Virginia"):
-    lX, lY, tX, tY = load_testsplit_dataset(boxer, as_onehot=True, normalize=True, dropJ=True)
+    lX, lY, tX, tY = load_testsplit_dataset(boxer, as_onehot=True, optimalish=True)
     print(f"X shape: {lX.shape[1:]}")
     print(f"Y shape: {lY.shape[1:]}")
     print(f"N learning:", len(lX))
@@ -24,19 +22,17 @@ def get_shaped_data(boxer="Virginia"):
 
 def get_simple_convnet(inshape, outshape):
     ann = Sequential(layers=[
-        BatchNormalization(input_shape=inshape),
-        Conv1D(8, kernel_size=3), Activation("relu"), BatchNormalization(),  # 8
-        MaxPooling1D(), Flatten(), Activation("relu"), BatchNormalization(),  # 4 x 8 = 32
-        Dense(12, activation="relu"), BatchNormalization(),
+        Conv1D(64, input_shape=inshape, kernel_size=5),
+        Flatten(), Activation("relu"), Dropout(0.5),
+        Dense(128, activation="tanh"), Dropout(0.5),
         Dense(outshape[0], activation="softmax")
     ])
-    ann.compile(optimizer=Adam(lr=0.1), loss="categorical_crossentropy", metrics=["acc"])
+    ann.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["acc"])
     return ann
 
 
 def get_fully_convnet(inshape, outshape):
     ann = Sequential(layers=[
-        BatchNormalization(input_shape=inshape),
         Conv1D(128, kernel_size=3), MaxPooling1D(), Activation("relu"), BatchNormalization(),  # 4
         Conv1D(outshape[0], kernel_size=4, kernel_regularizer="l2"), Flatten(), Activation("softmax")
     ])
@@ -74,20 +70,18 @@ def get_hydra_network(inshape, outshape):
     o = Dense(outshape[0], activation="softmax")(d)
 
     ann = Model(inputs=x, outputs=o, name="Hydra")
-    ann.compile(optimizer=Adam(0.001), loss="categorical_crossentropy", metrics=["acc"])
-    plot_model(ann, to_file=projectroot + "Hydra.png")
+    ann.compile(optimizer=Adam(0.1), loss="categorical_crossentropy", metrics=["acc"])
+    # plot_model(ann, to_file=projectroot + "Hydra.png")
     return ann
 
 
 def get_lstm(inshape, outshape):
     ann = Sequential(layers=[
-        BatchNormalization(input_shape=inshape),
-        LSTM(300, activation="relu", return_sequences=True), BatchNormalization(),
-        LSTM(180, activation="relu"), BatchNormalization(),
-        Dense(60, activation="tanh"), BatchNormalization(),
+        LSTM(128, input_shape=inshape, activation="relu"),
+        Dense(32, activation="tanh"),
         Dense(outshape[0], activation="softmax")
     ])
-    ann.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["acc"])
+    ann.compile(optimizer=Adam(0.01), loss="categorical_crossentropy", metrics=["acc"])
     return ann
 
 
@@ -96,9 +90,11 @@ def xperiment():
     cls = np.unique(lY.argmax(axis=1))
     w = compute_class_weight("balanced", cls, lY.argmax(axis=1))
     net = get_simple_convnet(lX.shape[1:], lY.shape[1:])
-    history = net.fit(lX, lY, batch_size=180, epochs=100, verbose=True, validation_data=(tX, tY),
-                      class_weight=w)
-    plot_learning_dynamics(history)
+    while 1:
+        history = net.fit(lX, lY, batch_size=32, epochs=100, verbose=True, validation_data=(tX, tY))
+        plot_learning_dynamics(history)
+        if input("More? n/Y > ").lower() == "n":
+            break
 
 
 if __name__ == '__main__':

@@ -4,17 +4,18 @@ from matplotlib import pyplot as plt
 from EBH.utility.peak import find_peaks
 from EBH.utility.frame import DataWrapper
 from EBH.utility.operation import average_filter
-from EBH.utility.const import labels
+from EBH.utility.const import labels, projectroot
 
 
 def plot_acceleration(dw, show=True, dumppath=None):
     ldata, rdata = dw.get_data("left", 0), dw.get_data("right", 0)
     time = dw.time
-    fig, axarr = plt.subplots(2, 2, figsize=(20, 10))
-    for i, (lcol, rcol, ax) in enumerate(zip(ldata.T, rdata.T, axarr.flat[:3]), start=1):
-        ax.set_title("Axis {}".format(i))
+    fig, axarr = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(25, 10))
+    for i, (lcol, rcol, ax) in enumerate(zip(ldata.T, rdata.T, axarr.flat[:3])):
+        ax.set_title("Axis {}".format("xyz"[i]))
         ax.plot(time, lcol)
         ax.plot(time, rcol)
+        ax.set_yticks(range(-130, 131, 10))
         ax.grid()
     axarr[-1, -1].plot(time, np.linalg.norm(ldata, axis=1), label="Left")
     axarr[-1, -1].plot(time, np.linalg.norm(rdata, axis=1), label="Right")
@@ -112,5 +113,6 @@ def plot_peaks_fft(dw):
 
 
 if __name__ == '__main__':
-    dwrap = DataWrapper("Szilard_fel", cliptime=False)
-    plot_peaks_subtract(dwrap)
+    dwrap = DataWrapper(f"{projectroot}clp/Istvan_fel.txt", cliptime=False)
+    # dwrap = DataWrapper("Virginia_le", cliptime=False)
+    plot_acceleration(dwrap)

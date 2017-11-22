@@ -60,14 +60,10 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
     dropJ = kw.get("dropJ")
     if dropJ:
         X, Y = drop_category(X, Y, 0, dropJ)
+    if kw.get("optimalish"):
+        X, Y = optimalish_config((X, Y))
     if kw.get("as_matrix"):
         X = as_matrix(X)
-    if kw.get("mxnormalize"):
-        X /= 128.
-    if kw.get("normalize"):
-        X = normalize(X)
-    if kw.get("as_matrix"):
-        X = decorrelate(X)
     if kw.get("as_string"):
         Y = as_string(Y, kw.get("labels", labels))
     elif kw.get("as_onehot"):
@@ -77,25 +73,24 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
     return X, Y
 
 
+def optimalish_config(learning, testing=None):
+
+    def doit(dset):
+        new = np.stack((dset[0][:, :, 1], np.linalg.norm(dset[0], axis=2)), axis=-1)
+        return np.abs(new / 128.), dset[1]
+
+    if testing is None:
+        return doit(learning)
+    return doit(learning) + doit(testing)
+
+
 # noinspection PyCallingNonCallable
 def load_testsplit_dataset(boxer, **kw):
     lkw = dict(as_matrix=kw.get("as_matrix"), as_string=kw.get("as_string"),
-               as_onehot=kw.get("as_onehot"), dropJ=kw.get("dropJ"))
+               as_onehot=kw.get("as_onehot"), dropJ=kw.get("dropJ"),
+               mxnormalize=kw.get("mxnormalize"), optimalish=kw.get("optimalish"))
     lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", **lkw)
     tX, tY = load_dataset(f"{ltbroot}E_{boxer}_testing.pkl.gz", **lkw)
-    if kw.get("mxnormalize"):
-        lX /= 128.
-        tX /= 128.
-    if kw.get("normalize"):
-        lX, mu, sigma = normalize(lX, getparam=True)
-        tX = normalize(tX, mu, sigma)
-    if kw.get("decorrelate"):
-        lX, pca = decorrelate(lX, getmodel=True)
-        tX = decorrelate(tX, pca)
-    ytr = kw.get("y_transform")
-    if ytr is not None:
-        lX[:, 1] = ytr(lX[:, 1])
-        tX[:, 1] = ytr(tX[:, 1])
     return lX, lY, tX, tY
 
 

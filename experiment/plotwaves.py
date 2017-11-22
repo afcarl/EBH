@@ -1,12 +1,17 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from EBH.utility.operation import load_testsplit_dataset
+from EBH.utility.frame import DataWrapper
+from EBH.utility.operation import as_string
 
 STEP = 15
-sgm = lambda z: 1. / 1. + np.exp(-z)
+PEAKSIZE = 20
+READINGFRAME = 0
 
-_, _, X, Y = load_testsplit_dataset("Virginia", as_string=True, mxnormalize=True, y_transform=np.tanh)
+dw = DataWrapper("Virginia_le")
+X, Y = dw.get_learning_table(PEAKSIZE)
+# X, Y = load_dataset()
+Y = as_string(Y)
 N, peaksize, axes = X.shape
 
 
@@ -15,18 +20,33 @@ def meanlet(Xs, Ys, label):
 
 
 def plot_diff():
-    d = (meanlet(X, Y, "H") - meanlet(X, Y, "U"))[:, 1]**2.
+    d = (meanlet(X, Y, "H") - meanlet(X, Y, "U"))
     plt.plot(d)
     plt.title(f"$D = {np.sqrt(d.sum()):.2f}$")
     plt.show()
 
 
-def plot_mean_wavelets():
-    fig, axarr = plt.subplots(3, 1, figsize=(20, 10))
-    for label, ax in zip("JHU", axarr):
-        wavelet = np.median(X[Y == label], axis=0)
-        ax.plot(wavelet)
+def plot_mean_wavelets(name):
+    dwtop = DataWrapper(name + "_fel")
+    dwbot = DataWrapper(name + "_le")
+    topX, topY = dwtop.get_learning_table(PEAKSIZE, READINGFRAME)
+    botX, botY = dwbot.get_learning_table(PEAKSIZE, READINGFRAME)
+    topY, botY = map(as_string, (topY, botY))
+    meanlets = (list(map(lambda lbl: meanlet(topX, topY, lbl), "JHU")) +
+                list(map(lambda lbl: meanlet(botX, botY, lbl), "JHU")))
+    # noinspection PyTypeChecker
+    fig, axarr = plt.subplots(3, 2, sharey=True, sharex=True, figsize=(20, 10))
+    label = ["top" + l for l in "JHU"] + ["bot" + l for l in "JHU"]
+    for label, ax, mlet in zip(label, axarr.T.flat, meanlets):
+        mlet = np.abs(mlet)
+        for n, x in zip("xyz", mlet.T):
+            ax.plot(x, label=n)
+        ax.plot(np.linalg.norm(mlet, axis=1), "r-", label="L2")
         ax.set_title(f"Mean wavelet for {label}")
+        ax.set_xticks(range(0, PEAKSIZE))
+        ax.grid()
+    plt.legend()
+    plt.suptitle(name)
     plt.tight_layout()
     plt.show()
 
@@ -43,4 +63,4 @@ def plot_peaks():
 
 
 if __name__ == '__main__':
-    plot_mean_wavelets()
+    plot_mean_wavelets("Toni")
