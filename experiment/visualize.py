@@ -113,6 +113,6 @@ def plot_peaks_fft(dw):
 
 
 if __name__ == '__main__':
-    dwrap = DataWrapper(f"{projectroot}clp/Istvan_fel.txt", cliptime=False)
-    # dwrap = DataWrapper("Virginia_le", cliptime=False)
-    plot_acceleration(dwrap)
+    dwrap = DataWrapper("Szilard_le", cliptime=True)
+    # dwrap.adjust_threshold()
+    plot_peaks_subtract(dwrap)
