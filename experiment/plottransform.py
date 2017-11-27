@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA, FastICA, KernelPCA
@@ -8,7 +11,32 @@ from csxdata.visual.scatter import Scatter3D, Scatter2D
 
 from EBH.utility.assemble import dwstream
 from EBH.utility.operation import as_matrix, as_string
-from EBH.utility.const import professionals
+from EBH.utility.const import professionals, projectroot
+
+
+def load_data(usecache=True):
+    cachefile = f"{projectroot}plotcache.cch"
+    if usecache and os.path.exists(cachefile):
+        return pickle.load(open(cachefile, "rb"))
+    Xs, Ys, name, hand, ID, pro = [], [], [], [], [], []
+    for dw in dwstream():
+        x, y = dw.get_learning_table(PEAKSIZE, READINGFRAME)
+        mask = y < 3
+        x, y = x[mask], y[mask]
+        Xs.append(x)
+        Ys.append(y)
+        N = len(x)
+        name.append([dw.boxer]*N)
+        hand.append([dw.orientation]*N)
+        ID.append([dw.ID]*N)
+        pro.append([dw.boxer in professionals]*N)
+    Xs, Ys, name, hand, ID, pro = map(np.concatenate, (Xs, Ys, name, hand, ID, pro))
+    Ys = as_string(Ys)
+    hand_gesture = np.vectorize(lambda s1, s2: s1 + s2)(hand, Ys)
+    output = Xs, Ys, name, hand, ID, pro, hand_gesture
+    if usecache:
+        pickle.dump(output, open(cachefile, "wb"))
+    return output
 
 
 def get_model(model, ndim):
@@ -41,24 +69,14 @@ def plot_transformation2D(transform, X, Y=None):
 PEAKSIZE = 20
 READINGFRAME = 3
 
-if __name__ == '__main__':
-    Xs, Ys, name, hand, ID, pro = [], [], [], [], [], []
-    for dw in dwstream():
-        x, y = dw.get_learning_table(PEAKSIZE, READINGFRAME)
-        mask = y < 3
-        x, y = x[mask], y[mask]
-        Xs.append(x)
-        Ys.append(y)
-        N = len(x)
-        name.append([dw.boxer]*N)
-        hand.append([dw.orientation]*N)
-        ID.append([dw.ID]*N)
-        pro.append([dw.boxer in professionals]*N)
-    Xs, Ys, name, hand, ID, pro = map(np.concatenate, (Xs, Ys, name, hand, ID, pro))
-    Ys = as_string(Ys)
-    hand_gesture = np.vectorize(lambda s1, s2: s1 + s2)(hand, Ys)
+
+def main():
+    Xs, gesture, name, hand, ID, pro, hand_gesture = load_data(usecache=True)
     # Xs = Xs.reshape(Xs.shape[0], np.prod(Xs.shape[1:]))
-    norm = np.linalg.norm(Xs, axis=2)
     x, y, z = Xs[:, :, 0], Xs[:, :, 1], Xs[:, :, 2]
-    myax = np.stack((y, norm), axis=-1)
-    plot_transformation3D("kpca", np.abs(myax), Ys)
+    myax = np.stack((x, y, y**2, z), axis=-1)
+    plot_transformation2D("lda", np.abs(myax), gesture)
+
+
+if __name__ == '__main__':
+    main()

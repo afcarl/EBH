@@ -43,12 +43,12 @@ def xperiment_leave_one_out(modeltype, initarg: dict=None):
     for name in boxer_names:
         lX, lY, tX, tY = load_testsplit_dataset(name, **LOADERARG)
         model = modeltype(**initarg)
-        print("-"*50)
-        print(f"{model.__class__.__name__} vs E_{name}")
+        # print("-"*50)
+        # print(f"{model.__class__.__name__} vs E_{name}")
         model.fit(lX, lY)
         bycat_acc = split_eval(model, tX, tY)
-        for cat in ("J", "U", "H", "ALL"):
-            print(f"{cat}: {bycat_acc[cat]:.2%}")
+        # for cat in ("J", "U", "H", "ALL"):
+        #     print(f"{cat}: {bycat_acc[cat]:.2%}")
         accs.append(bycat_acc["ALL"])
         nonj.append((bycat_acc["H"] + bycat_acc["U"])/2.)
     print("*"*50)

@@ -76,8 +76,9 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
 def optimalish_config(learning, testing=None):
 
     def doit(dset):
-        new = np.stack((dset[0][:, :, 1], np.linalg.norm(dset[0], axis=2)), axis=-1)
-        return np.abs(new / 128.), dset[1]
+        x, y, z = np.split(dset[0] / 128., 3, axis=-1)
+        new = np.stack((x, y, y**2., z), axis=-1)
+        return new, dset[1]
 
     if testing is None:
         return doit(learning)

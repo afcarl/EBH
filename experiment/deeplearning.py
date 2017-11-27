@@ -22,7 +22,7 @@ def get_shaped_data(boxer="Virginia"):
 
 def get_simple_convnet(inshape, outshape):
     ann = Sequential(layers=[
-        Conv1D(64, input_shape=inshape, kernel_size=5),
+        Conv1D(32, input_shape=inshape, kernel_size=5),
         Flatten(), Activation("relu"), Dropout(0.5),
         Dense(128, activation="tanh"), Dropout(0.5),
         Dense(outshape[0], activation="softmax")
