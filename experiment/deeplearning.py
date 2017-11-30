@@ -22,12 +22,14 @@ def get_shaped_data(boxer="Virginia"):
 
 def get_simple_convnet(inshape, outshape):
     ann = Sequential(layers=[
-        Conv1D(32, input_shape=inshape, kernel_size=5),
-        Flatten(), Activation("relu"), Dropout(0.5),
-        Dense(128, activation="tanh"), Dropout(0.5),
+        Conv1D(64, input_shape=inshape, kernel_size=3, kernel_regularizer="l2"),
+        Activation("relu"), BatchNormalization(),
+        Conv1D(32, input_shape=inshape, kernel_size=3, kernel_regularizer="l2"), Flatten(),
+        Activation("relu"), BatchNormalization(),
+        Dense(128, activation="tanh", kernel_regularizer="l2"), BatchNormalization(),
         Dense(outshape[0], activation="softmax")
     ])
-    ann.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["acc"])
+    ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
     return ann
 
 
@@ -86,15 +88,20 @@ def get_lstm(inshape, outshape):
 
 
 def xperiment():
-    lX, lY, tX, tY = get_shaped_data("Virginia")
+    lX, lY, tX, tY = get_shaped_data("Szilard")
     cls = np.unique(lY.argmax(axis=1))
     w = compute_class_weight("balanced", cls, lY.argmax(axis=1))
-    net = get_simple_convnet(lX.shape[1:], lY.shape[1:])
+    net = get_lstm(lX.shape[1:], lY.shape[1:])
     while 1:
         history = net.fit(lX, lY, batch_size=32, epochs=100, verbose=True, validation_data=(tX, tY))
         plot_learning_dynamics(history)
         if input("More? n/Y > ").lower() == "n":
             break
+
+
+def xperiment_all():
+    for boxer in boxers:
+
 
 
 if __name__ == '__main__':

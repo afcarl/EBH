@@ -10,8 +10,12 @@ from sklearn.manifold import TSNE, SpectralEmbedding, Isomap
 from csxdata.visual.scatter import Scatter3D, Scatter2D
 
 from EBH.utility.assemble import dwstream
-from EBH.utility.operation import as_matrix, as_string
+from EBH.utility.operation import as_matrix, as_string, optimalish_config
 from EBH.utility.const import professionals, projectroot
+
+
+def combine_categories(Y1, Y2):
+    return np.vectorize(lambda s1, s2: "_".join(map(str, (s1, s2))))(Y1, Y2)
 
 
 def load_data(usecache=True):
@@ -32,8 +36,8 @@ def load_data(usecache=True):
         pro.append([dw.boxer in professionals]*N)
     Xs, Ys, name, hand, ID, pro = map(np.concatenate, (Xs, Ys, name, hand, ID, pro))
     Ys = as_string(Ys)
-    hand_gesture = np.vectorize(lambda s1, s2: s1 + s2)(hand, Ys)
-    output = Xs, Ys, name, hand, ID, pro, hand_gesture
+    Xs, Ys = optimalish_config((Xs, Ys))
+    output = as_matrix(Xs), Ys, name, hand, ID, pro
     if usecache:
         pickle.dump(output, open(cachefile, "wb"))
     return output
@@ -50,7 +54,7 @@ def get_model(model, ndim):
 
 def plot_transformation3D(transform, X, Y=None):
     model = get_model(transform, 3)
-    latent = model.fit_transform(as_matrix(X) / 128., Y)
+    latent = model.fit_transform(X, Y)
     lX = latent[0] if len(latent) == 2 else latent
     scat = Scatter3D(lX, Y, ["LF01", "LF02", "LF03"])
     scat.split_scatter(show=True, legend=True)
@@ -58,7 +62,7 @@ def plot_transformation3D(transform, X, Y=None):
 
 def plot_transformation2D(transform, X, Y=None):
     model = get_model(transform, 2)
-    latent = model.fit_transform(as_matrix(X) / 128., Y)
+    latent = model.fit_transform(X, Y)
     lX = latent[0] if len(latent) == 2 else latent
     scat = Scatter2D(lX, Y, axlabels=["LF01", "LF02"])
     scat.split_scatter(show=False, center=False, label=False, alpha=0.3)
@@ -67,15 +71,12 @@ def plot_transformation2D(transform, X, Y=None):
 
 
 PEAKSIZE = 20
-READINGFRAME = 3
+READINGFRAME = 0
 
 
 def main():
-    Xs, gesture, name, hand, ID, pro, hand_gesture = load_data(usecache=True)
-    # Xs = Xs.reshape(Xs.shape[0], np.prod(Xs.shape[1:]))
-    x, y, z = Xs[:, :, 0], Xs[:, :, 1], Xs[:, :, 2]
-    myax = np.stack((x, y, y**2, z), axis=-1)
-    plot_transformation2D("lda", np.abs(myax), gesture)
+    Xs, gesture, name, hand, ID, pro = load_data(usecache=True)
+    plot_transformation2D("lda", Xs, gesture)
 
 
 if __name__ == '__main__':

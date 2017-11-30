@@ -76,22 +76,23 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
 def optimalish_config(learning, testing=None):
 
     def doit(dset):
-        x, y, z = np.split(dset[0] / 128., 3, axis=-1)
-        new = np.stack((x, y, y**2., z), axis=-1)
+        x, y, z = np.split(dset[0], 3, axis=-1)
+        new = np.concatenate((x, y, y**2., z), axis=-1)
         return new, dset[1]
 
     if testing is None:
-        return doit(learning)
-    return doit(learning) + doit(testing)
+        X, Y = doit(learning)
+        return normalize(X), Y
+    (lX, lY), (tX, tY) = doit(learning), doit(testing)
+    lX, mu, sigma = normalize(lX, getparam=True)
+    tX = normalize(tX, mu, sigma)
+    return lX, lY, tX, tY
 
 
 # noinspection PyCallingNonCallable
 def load_testsplit_dataset(boxer, **kw):
-    lkw = dict(as_matrix=kw.get("as_matrix"), as_string=kw.get("as_string"),
-               as_onehot=kw.get("as_onehot"), dropJ=kw.get("dropJ"),
-               mxnormalize=kw.get("mxnormalize"), optimalish=kw.get("optimalish"))
-    lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", **lkw)
-    tX, tY = load_dataset(f"{ltbroot}E_{boxer}_testing.pkl.gz", **lkw)
+    lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", **kw)
+    tX, tY = load_dataset(f"{ltbroot}E_{boxer}_testing.pkl.gz", **kw)
     return lX, lY, tX, tY
 
 
