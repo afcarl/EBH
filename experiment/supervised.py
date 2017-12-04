@@ -64,12 +64,12 @@ LOADERARG = dict(as_matrix=True, as_string=True, optimalish=True)
 
 
 if __name__ == '__main__':
-    xperiment_leave_one_out(ClassifierMock)
-    xperiment_leave_one_out(SVC, dict(C=.1337, kernel="poly", degree=2, class_weight="balanced"))  # 73%
-    xperiment_leave_one_out(SVC, dict(C=.1337, kernel="rbf", class_weight="balanced"))  # 66%
-    xperiment_leave_one_out(RandomForestClassifier, dict(class_weight="balanced"))  # 67%
-    xperiment_leave_one_out(KNeighborsClassifier)  # 65%
-    xperiment_leave_one_out(GaussianNB)  # 63%
-    xperiment_leave_one_out(QDA)  # 68%
-    xperiment_leave_one_out(MLPClassifier, dict(learning_rate_init=0.1))  # 65%
-    xperiment_leave_one_out(Perceptron, dict(class_weight="balanced", max_iter=1000, tol=1e-3))
+    # xperiment_leave_one_out(ClassifierMock)
+    # xperiment_leave_one_out(SVC, dict(C=.1337, kernel="poly", degree=2, class_weight="balanced"))  # 73%
+    # xperiment_leave_one_out(SVC, dict(C=.1337, kernel="rbf", class_weight="balanced"))  # 66%
+    # xperiment_leave_one_out(RandomForestClassifier, dict(class_weight="balanced"))  # 67%
+    xperiment_leave_one_out(KNeighborsClassifier, dict(metric="manhattan"))  # 65%
+    # xperiment_leave_one_out(GaussianNB)  # 63%
+    # xperiment_leave_one_out(QDA)  # 68%
+    # xperiment_leave_one_out(MLPClassifier, dict(learning_rate_init=0.1))  # 65%
+    # xperiment_leave_one_out(Perceptron, dict(class_weight="balanced", max_iter=1000, tol=1e-3))

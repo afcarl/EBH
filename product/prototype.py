@@ -63,12 +63,3 @@ class GestureRecognizer:
 
     def feed(self, left, right, result):
         pass
-
-    def _translate_hexa(self):
-        pass
-
-    def fit_model(self, X, Y):
-        pass
-
-    def incorporate(self, hexa):
-        pass

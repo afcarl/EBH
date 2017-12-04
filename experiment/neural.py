@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, BatchNormalization
 
 from csxdata.utilities.vectorop import split_by_categories
 
@@ -11,8 +11,7 @@ from EBH.utility.visual import plot_learning_dynamics
 def build_ann(indim, outdim):
     # print(f"Building ANN for data with dimensionality: {indim} / {outdim}")
     ann = Sequential(layers=[
-        Dense(64, input_dim=indim, activation="relu"), Dropout(0.5),
-        Dense(64, input_dim=indim, activation="tanh"), Dropout(0.5),
+        Dense(32, input_dim=indim, activation="tanh", kernel_regularizer="l2"),
         Dense(outdim, activation="softmax")
     ])
     ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
@@ -24,7 +23,7 @@ def split_experiment(learn_on_me, test_on_me, plot=True, verbose=1):
     tX, tY = test_on_me
     ann = build_ann(lX.shape[-1], lY.shape[-1])
 
-    history = ann.fit(lX, lY, batch_size=16, epochs=100,
+    history = ann.fit(lX, lY, batch_size=32, epochs=100,
                       validation_data=test_on_me,
                       verbose=False, class_weight="balanced")
 
@@ -53,7 +52,7 @@ def basic_validation():
 
 
 def basic_testing(boxer="Bela"):
-    lX, lY, tX, tY = load_testsplit_dataset(boxer, as_onehot=True, optimalish=True)
+    lX, lY, tX, tY = load_testsplit_dataset(boxer, as_matrix=True, as_onehot=True, optimalish=True)
     split_experiment(learn_on_me=(lX, lY), test_on_me=(tX, tY))
 
 

@@ -77,7 +77,7 @@ def optimalish_config(learning, testing=None):
 
     def doit(dset):
         x, y, z = np.split(dset[0], 3, axis=-1)
-        new = np.concatenate((x, y, y**2., z), axis=-1)
+        new = np.concatenate((x, y, np.abs(y), z), axis=-1)
         return new, dset[1]
 
     if testing is None:
