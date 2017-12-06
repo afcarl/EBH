@@ -34,33 +34,37 @@ def split_eval(model, tX, tY):
     accs = dict()
     for cat in splitarg:
         arg = splitarg[cat]
-        accs[cat] = np.mean(model.predict(tX[arg]) == tY[arg])
-    accs["ALL"] = np.mean(model.predict(tX) == tY)
+        accs[cat] = (np.mean(model.predict(tX[arg]) == tY[arg]), len(arg))
+    accs["ALL"] = (np.mean(model.predict(tX) == tY), len(tY))
     return accs
 
 
-def xperiment_leave_one_out(modeltype, initarg: dict=None):
+def xperiment_leave_one_out(modeltype, initarg: dict=None, verbosity=1):
     accs = []
     nonj = []
     initarg = dict() if initarg is None else initarg  # type: dict
     for name in boxer_names:
         lX, lY, tX, tY = load_testsplit_dataset(name, **LOADERARG)
         model = modeltype(**initarg)
-        print("-"*50)
-        print(f"{model.__class__.__name__} vs E_{name}")
+        if verbosity > 1:
+            print("-"*50)
+            print(f"{model.__class__.__name__} vs E_{name}")
         model.fit(lX, lY)
         bycat_acc = split_eval(model, tX, tY)
-        for cat in ("J", "U", "H", "ALL"):
-            print(f"{cat}: {bycat_acc[cat]:.2%}")
-        accs.append(bycat_acc["ALL"])
-        nonj.append((bycat_acc["H"] + bycat_acc["U"])/2.)
-    print("*"*50)
-    print(f"MODEL: {modeltype.__name__.upper()} - {initarg}")
-    print(f"OVERALL ACCURACY: {np.mean(accs):.2%}")
-    print(f"OVERALL NON-J ACCURACY: {np.mean(nonj):.2%}")
+        if verbosity > 1:
+            for cat in ("J", "U", "H", "ALL"):
+                acc, n = bycat_acc[cat]
+                print(f"{cat} ({n}): {acc:.2%}")
+        accs.append(bycat_acc["ALL"][0])
+        nonj.append((bycat_acc["H"][0] + bycat_acc["U"][0])/2.)
+    if verbosity:
+        print("*"*50)
+        print(f"MODEL: {modeltype.__name__.upper()} - {initarg}")
+        print(f"OVERALL ACCURACY: {np.mean(accs):.2%}")
+        print(f"OVERALL NON-J ACCURACY: {np.mean(nonj):.2%}")
 
 
-LOADERARG = dict(as_matrix=True, as_string=True, optimalish=True)
+LOADERARG = dict(as_matrix=True, as_string=True, optimalish=True, drop_outliers=0.95)
 
 
 if __name__ == '__main__':
@@ -68,7 +72,8 @@ if __name__ == '__main__':
     # xperiment_leave_one_out(SVC, dict(C=.1337, kernel="poly", degree=2, class_weight="balanced"))  # 73%
     # xperiment_leave_one_out(SVC, dict(C=.1337, kernel="rbf", class_weight="balanced"))  # 66%
     # xperiment_leave_one_out(RandomForestClassifier, dict(class_weight="balanced"))  # 67%
-    xperiment_leave_one_out(KNeighborsClassifier, dict(metric="manhattan"))  # 65%
+    for n in range(1, 11):
+        xperiment_leave_one_out(KNeighborsClassifier, dict(weights="distance", n_neighbors=n, metric="manhattan"))  # 65%
     # xperiment_leave_one_out(GaussianNB)  # 63%
     # xperiment_leave_one_out(QDA)  # 68%
     # xperiment_leave_one_out(MLPClassifier, dict(learning_rate_init=0.1))  # 65%

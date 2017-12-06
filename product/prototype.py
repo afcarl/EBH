@@ -4,6 +4,9 @@ from types import SimpleNamespace
 
 GRData = namedtuple("GRData", "ID", "activity", "hand", "event", "intensity", "angle", "gc", "fwd")
 
+GRRawHandleData = namedtuple("GRRawHandleData", "deviceId", "message_cntr", "relative_cntr",
+                             "status_byte", "acc_x", "acc_y", "acc_z")
+
 
 class GRStats(SimpleNamespace):
 
@@ -59,7 +62,7 @@ class GestureRecognizer:
 
         self.model = None
         self.threshold = threshold
-        self.memory = deque(maxlen=10)
+        self.memory = [0 for _ in range(peaksize)]
 
-    def feed(self, left, right, result):
+    def feed(self, rawdata: GRRawHandleData):
         pass

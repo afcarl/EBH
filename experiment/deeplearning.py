@@ -2,31 +2,32 @@ import numpy as np
 from sklearn.utils import compute_class_weight
 
 from keras.models import Sequential, Model
-from keras.layers import BatchNormalization, Dense, Input, Concatenate, Dropout
+from keras.layers import BatchNormalization, Dense, Input, Concatenate
 from keras.layers import Conv1D, Flatten, Activation, MaxPooling1D
 from keras.layers import LSTM
 from keras.optimizers import Adam
 
-from EBH.utility.operation import load_testsplit_dataset
+from EBH.utility.const import boxer_names, labels
 from EBH.utility.visual import plot_learning_dynamics
+from EBH.utility.operation import load_testsplit_dataset
 
 
 def get_shaped_data(boxer="Virginia"):
     lX, lY, tX, tY = load_testsplit_dataset(boxer, as_onehot=True, optimalish=True)
-    print(f"X shape: {lX.shape[1:]}")
-    print(f"Y shape: {lY.shape[1:]}")
-    print(f"N learning:", len(lX))
-    print(f"N testing ({boxer}):", len(tX))
+    # print(f"X shape: {lX.shape[1:]}")
+    # print(f"Y shape: {lY.shape[1:]}")
+    # print(f"N learning:", len(lX))
+    # print(f"N testing ({boxer}):", len(tX))
     return lX, lY, tX, tY
 
 
 def get_simple_convnet(inshape, outshape):
     ann = Sequential(layers=[
-        Conv1D(64, input_shape=inshape, kernel_size=3, kernel_regularizer="l2"),
+        Conv1D(32, input_shape=inshape, kernel_size=3),
         Activation("relu"), BatchNormalization(),
-        Conv1D(32, input_shape=inshape, kernel_size=3, kernel_regularizer="l2"), Flatten(),
+        Conv1D(16, input_shape=inshape, kernel_size=3), Flatten(),
         Activation("relu"), BatchNormalization(),
-        Dense(128, activation="tanh", kernel_regularizer="l2"), BatchNormalization(),
+        Dense(64, activation="tanh"), BatchNormalization(),
         Dense(outshape[0], activation="softmax")
     ])
     ann.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["acc"])
@@ -99,10 +100,29 @@ def xperiment():
             break
 
 
-def xperiment_all():
-    for boxer in boxers:
+def split_eval(net, tX, tY):
+    cat = np.unique(tY)
+    cat_acc = {}
+    for c in cat:
+        mask = tY.argmax(axis=1) == c
+        cat_acc[labels[c]] = net.evaluate(tX[mask], tY[mask], verbose=False)
+    cat_acc["ALL"] = net.evaluate(tX, tY, verbose=False)
+    return cat_acc
 
+
+def xperiment_all(nettype="LSTM"):
+    netget = {"LSTM": get_lstm, "CNN": get_simple_convnet, "Hydra": get_hydra_network}[nettype]
+    for boxer in boxer_names:
+        print("-"*50)
+        lX, lY, tX, tY = get_shaped_data(boxer)
+        net = netget(lX.shape[1:], lY.shape[1:])
+        for decade in range(1, 10):
+            print(f"\r{nettype} vs {boxer}: {decade*10}/{100}", end="")
+            net.fit(lX, lY, batch_size=32, epochs=10, verbose=False)
+        cat_acc = split_eval(net, tX, tY)
+        for c in labels + ("ALL",):
+            print(f"{c} ACC: {cat_acc[c]:.2%}")
 
 
 if __name__ == '__main__':
-    xperiment()
+    xperiment_all("CNN")

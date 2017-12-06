@@ -10,6 +10,11 @@ def average_filter(series, window=2):
     return np.convolve(series, np.ones(window) / window, mode="same")
 
 
+def mahal(x, mu, sigma):
+    z = mu - x
+    return z @ np.linalg.inv(sigma) @ z
+
+
 def shuffle(X, Y, *more):
     arg = np.arange(len(X))
     np.random.shuffle(arg)
@@ -55,11 +60,41 @@ def drop_category(X, Y, categ, m):
     return X[mask], Y[mask]
 
 
+def drop_outliers(X, Y, zval=0.95):
+    assert Y.ndim == 1
+    categ = np.unique(Y)
+    newX, newY = [], []
+    for cat in categ:
+        mask = Y == cat
+        Xc = as_matrix(X[mask])
+        mu, cov = np.mean(Xc, axis=0), np.cov(Xc.T)
+        d = np.apply_along_axis(mahal, 1, Xc, **dict(mu=mu, sigma=cov))
+        validarg = np.argsort(d)[:int(zval*len(Xc))]
+        newX.append(X[mask][validarg])
+        newY.append(Y[mask][validarg])
+    return np.concatenate(newX), np.concatenate(newY)
+
+
+def optimalish_config(learning, testing=None):
+
+    def doit(dset):
+        x, y, z = np.split(dset[0], 3, axis=-1)
+        new = np.concatenate((x, y, np.abs(y), z), axis=-1)
+        return new / 127., dset[1]
+
+    output = doit(learning)
+    if testing is not None:
+        output += doit(testing)
+    return output
+
+
 def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
     X, Y = pickle.load(gzip.open(path))
-    dropJ = kw.get("dropJ")
-    if dropJ:
-        X, Y = drop_category(X, Y, 0, dropJ)
+    dropoutliers = kw.get("drop_outliers", False)
+    if kw.get("drop_outliers"):
+        if not isinstance(dropoutliers, float) or dropoutliers <= 0. or dropoutliers >= 1.:
+            dropoutliers = 0.95
+        X, Y = drop_outliers(X, Y, dropoutliers)
     if kw.get("optimalish"):
         X, Y = optimalish_config((X, Y))
     if kw.get("as_matrix"):
@@ -73,25 +108,9 @@ def load_dataset(path=DEFAULT_DATASET, split=0., **kw):
     return X, Y
 
 
-def optimalish_config(learning, testing=None):
-
-    def doit(dset):
-        x, y, z = np.split(dset[0], 3, axis=-1)
-        new = np.concatenate((x, y, np.abs(y), z), axis=-1)
-        return new, dset[1]
-
-    if testing is None:
-        X, Y = doit(learning)
-        return normalize(X), Y
-    (lX, lY), (tX, tY) = doit(learning), doit(testing)
-    lX, mu, sigma = normalize(lX, getparam=True)
-    tX = normalize(tX, mu, sigma)
-    return lX, lY, tX, tY
-
-
 # noinspection PyCallingNonCallable
 def load_testsplit_dataset(boxer, **kw):
-    lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", **kw)
+    lX, lY = load_dataset(f"{ltbroot}E_{boxer}_learning.pkl.gz", drop_outliers=kw.pop("drop_outliers", False), **kw)
     tX, tY = load_dataset(f"{ltbroot}E_{boxer}_testing.pkl.gz", **kw)
     return lX, lY, tX, tY
 
