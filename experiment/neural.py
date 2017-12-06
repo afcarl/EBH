@@ -58,10 +58,10 @@ def basic_testing(boxer="Bela"):
 
 def advanced_testing():
     for name in boxer_names:
-        lX, lY, tX, tY = load_testsplit_dataset(name, as_onehot=True, as_matrix=True, optimalish=True)
-        bycat_acc = split_experiment((lX, lY), (tX, tY), plot=False, verbose=0)
         print("-"*50)
         print("Split evaluation on excluded sample:", name)
+        lX, lY, tX, tY = load_testsplit_dataset(name, as_onehot=True, as_matrix=True, optimalish=True)
+        bycat_acc = split_experiment((lX, lY), (tX, tY), plot=False, verbose=0)
         for cat in range(3):
             print(f"{labels[cat]}: {bycat_acc[cat]:.2%}")
         print(f"ALL: {bycat_acc['ALL']:.2%}")
