@@ -1,4 +1,5 @@
-from EBH.utility.operation import load_dataset, decorrelate
+import numpy as np
+from EBH.utility.operation import load_dataset, decorrelate, as_matrix
 from EBH.utility.frame import DataWrapper
 
 
@@ -54,5 +55,18 @@ def compare_parsers(onfile):
     # assert not d.sum()
 
 
+def generate_neighborhood():
+    from EBH.utility.assemble import assemble_data
+    from EBH.utility.const import projectroot
+    X, Y = assemble_data(peaksize=20)
+    x, y, z = X.T
+    X = np.concatenate((x.T, y.T, np.abs(y.T), z.T), axis=-1)
+    X = as_matrix(X)
+    Xs, Ys = X.astype("int8").tostring(), Y.astype("int8").tostring()
+    Ns = np.array([len(X)], dtype="int16").tostring()
+    with open(projectroot + "neighborhood.bin", "wb") as handle:
+        handle.write(Ns + Ys + Xs)
+
+
 if __name__ == '__main__':
-    inspect_session("David_le")
+    generate_neighborhood()

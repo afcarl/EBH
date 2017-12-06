@@ -22,7 +22,7 @@ def dwstream(exclude=(), include_only="all"):
         yield dw
 
 
-def assemble_data(dws=None, peaksize=10, includeclass="JHU"):
+def assemble_data(dws=None, peaksize=20, includeclass="JHU"):
     dws = dwstream() if dws is None else dws
     Xs, Ys = [], []
     for dw in dws:  # type: DataWrapper
