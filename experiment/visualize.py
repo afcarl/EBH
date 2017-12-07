@@ -113,7 +113,6 @@ def plot_peaks_fft(dw):
 
 
 if __name__ == '__main__':
-    while 1:
-        dwrap = DataWrapper("David_le", cliptime=True)
-        # dwrap.adjust_threshold()
-        plot_peaks_subtract(dwrap)
+    dwrap = DataWrapper("David_le", cliptime=True)
+    # dwrap.adjust_threshold()
+    plot_acceleration(dwrap)
