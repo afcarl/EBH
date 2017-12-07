@@ -1,33 +1,33 @@
-import tensorflow as tf
+import numpy as np
 
 from EBH.utility.const import projectroot
-from EBH.utility.operation import load_dataset
 
 
-def build_tfgraph():
+class KNN:
 
-    npX, npY = load_dataset(as_matrix=True, optimalish=True)
+    def __init__(self):
+        raw = open(projectroot + "neighborhood.bin", "rb").read()
+        self.N = np.fromstring(raw[:2], dtype="int16")[0]
+        self.Y = np.fromstring(raw[2:self.N+2], dtype="int8").astype(int)
+        self.X = np.fromstring(raw[self.N+2:], dtype="int8").astype(int)
+        self.X = self.X.reshape(self.N, len(self.X) // self.N)
 
-    test_point = tf.placeholder(dtype="float64", shape=[1, 20*4])
+    def predict(self, x):
+        d = np.sum(np.abs(self.X - x), axis=1)
+        assert len(d) == len(self.X)
+        votes = [0, 0, 0]
+        for arg in np.argsort(d)[:5]:
+            votes[self.Y[arg]] += 1
+        return np.argmax(votes)
 
-    X = tf.get_variable("X", initializer=tf.constant(npX))
-    Y = tf.get_variable("Y", initializer=tf.constant(npY))
-    d = tf.norm(X - test_point, axis=1)
-    dval, darg = tf.arg_min(d, dimension=0)[:5]
-    votes = Y[darg]
-
-    n0 = tf.reduce_sum(tf.equal(votes, 0))
-    n1 = tf.reduce_sum(tf.equal(votes, 1))
-    n2 = tf.reduce_sum(tf.equal(votes, 2))
-
-    pred = tf.argmax([n0, n1, n2])
-
-    saver = tf.train.Saver([X, Y, pred])
-    sess = tf.InteractiveSession()
-    saver.save(sess, save_path=projectroot + "KNN.tfm")
-
-    return pred
+    def evaluate(self):
+        preds = []
+        for i, x in enumerate(self.X, start=1):
+            print(f"\r{len(self.X)}/{i}", end="")
+            preds.append(self.predict(x))
+        print()
+        print("Current accuracy:", (preds == self.Y).mean())
 
 
-predop, newXop, newYop = build_tfgraph()
-
+if __name__ == '__main__':
+    KNN().evaluate()
