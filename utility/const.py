@@ -5,6 +5,7 @@ projectroot = os.path.expanduser("~/SciProjects/Project_EBH/")
 logroot = projectroot + "log/"
 labroot = projectroot + "man/"
 ltbroot = projectroot + "ltb/"
+clproot = projectroot + "clp/"
 
 labels = "JUHC0"
 DEFAULT_DATASET = ltbroot + "default.pkl.gz"
