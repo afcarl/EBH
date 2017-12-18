@@ -83,7 +83,7 @@ class DataWrapper:
             return self._annot["l"], self._annot["r"]
         return self._annot.get(str(side).lower()[0])
 
-    def get_learning_table(self, peaksize=10, readingframe=0):
+    def get_learning_table(self, peaksize=20, readingframe=0, splitsides=False):
 
         def dropboundary(pt, pb, at, ab, phs, mxln):
             tnope = np.logical_or(pt-phs < 0, pt+phs > mxln)
@@ -101,6 +101,6 @@ class DataWrapper:
         toparg, topY, botarg, botY = dropboundary(toparg, botarg, topY, botY, peaksize//2, len(top)-1)
         topX = np.array([top[p-hsize:p+hsize] for p in toparg])
         botX = np.array([bot[p-hsize:p+hsize] for p in botarg])
-        X, Y = np.r_[topX, botX], np.r_[topY, botY]
-        assert len(X) == len(Y)
-        return X, Y
+        assert len(topX) == len(topY)
+        assert len(botX) == len(botY)
+        return (topX, topY, botX, botY) if splitsides else (np.r_[topX, botX], np.r_[topY, botY])

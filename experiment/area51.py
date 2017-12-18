@@ -69,4 +69,4 @@ def generate_neighborhood():
 
 
 if __name__ == '__main__':
-    generate_neighborhood()
+    inspect_session("box4_fel")

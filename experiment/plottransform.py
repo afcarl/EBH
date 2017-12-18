@@ -22,22 +22,25 @@ def load_data(usecache=True):
     cachefile = f"{projectroot}plotcache.cch"
     if usecache and os.path.exists(cachefile):
         return pickle.load(open(cachefile, "rb"))
-    Xs, Ys, name, hand, ID, pro = [], [], [], [], [], []
+    Xs, Ys, name, orient, ID, pro, hand = [], [], [], [], [], [], []
     for dw in dwstream():
-        x, y = dw.get_learning_table(PEAKSIZE, READINGFRAME)
+        tx, ty, bx, by = dw.get_learning_table(PEAKSIZE, READINGFRAME, splitsides=True)
+        boundary = len(tx)
+        x, y = np.r_[tx, bx], np.r_[ty, by]
         mask = y < 3
         x, y = x[mask], y[mask]
         Xs.append(x)
         Ys.append(y)
         N = len(x)
         name.append([dw.boxer]*N)
-        hand.append([dw.orientation]*N)
+        orient.append([dw.orientation]*N)
         ID.append([dw.ID]*N)
         pro.append([dw.boxer in professionals]*N)
-    Xs, Ys, name, hand, ID, pro = map(np.concatenate, (Xs, Ys, name, hand, ID, pro))
+        hand.append(["left"]*boundary + ["right"]*(N - boundary))
+    Xs, Ys, name, orient, ID, pro, hand = map(np.concatenate, (Xs, Ys, name, orient, ID, pro, hand))
     Ys = as_string(Ys)
     Xs, Ys = optimalish_config((Xs, Ys))
-    output = as_matrix(Xs), Ys, name, hand, ID, pro
+    output = as_matrix(Xs), Ys, name, orient, ID, pro, hand
     if usecache:
         pickle.dump(output, open(cachefile, "wb"))
     return output
@@ -75,8 +78,8 @@ READINGFRAME = 0
 
 
 def main():
-    Xs, gesture, name, hand, ID, pro = load_data(usecache=True)
-    plot_transformation2D("lda", Xs, gesture)
+    Xs, gesture, name, orient, ID, pro, hand = load_data(usecache=False)
+    plot_transformation2D("lda", Xs, combine_categories(gesture, hand))
 
 
 if __name__ == '__main__':
