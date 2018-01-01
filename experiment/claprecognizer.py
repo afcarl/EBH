@@ -13,7 +13,7 @@ def clapsumplot(dw: DataWrapper):
     tx.plot(dw.time, left)
     tx.plot(dw.time, right)
     tx.grid()
-    bx.plot(dw.time, average_filter(sumdata))
+    bx.plot(dw.time, sumdata)
     bx.grid()
     plt.show()
 
