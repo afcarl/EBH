@@ -18,11 +18,14 @@ class DataWrapper:
             source = f"{logroot}{source}.txt"
         self.boxer, self.orientation = ID.split("_")
         # Data shape: [hand, N, frame, axis]
-        self.time, self._data = extract_data(source, clip=cliptime)
+        self.time, data = extract_data(source, clip=cliptime)
         labpath = f"{labroot}{self.ID}.txt"
-        a = pull_annotation(labpath) if os.path.exists(labpath) else [None, None, {}]
-        self._annot = {"l": a[0], "r": a[1]}
-        self.cfg.update(a[2])
+        atop, abot, acfg = pull_annotation(labpath) if os.path.exists(labpath) else [None, None, {}]
+        topleft = acfg.pop("left", False)
+        annot = [atop, abot]
+        self._data = {"l": data[topleft], "r": data[~topleft]}
+        self._annot = {"l": annot[topleft], "r": annot[~topleft]}
+        self.cfg.update(acfg)
 
     @property
     def ID(self):
@@ -98,6 +101,9 @@ class DataWrapper:
         hsize = peaksize // 2
         topY, botY = self.get_annotations(side=None)
         top, bot = self.get_data("left", readingframe), self.get_data("right", readingframe)
+        assert len(topY) == len(toparg) and len(botY) == len(botarg), \
+            f"topY: {len(topY)} v top: {len(toparg)}; botY: {len(botY)} v bot: {len(botarg)}"
+
         toparg, topY, botarg, botY = dropboundary(toparg, botarg, topY, botY, peaksize//2, len(top)-1)
         topX = np.array([top[p-hsize:p+hsize] for p in toparg])
         botX = np.array([bot[p-hsize:p+hsize] for p in botarg])

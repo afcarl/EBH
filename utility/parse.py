@@ -83,7 +83,7 @@ def extract_data(filepath, clip=True):
 
     # Data dim: [side (0, 1); N; rframe (0...4); axes (X, Y, Z)]
     times = []
-    data = {True: [np.zeros((5, 3))], False: [np.zeros((5, 3))]}
+    data = [[np.zeros((5, 3))], [np.zeros((5, 3))]]
     for line in filter(lambda l: "rawdata:" in l, lines):
         half1, half2 = line.strip().split(" rawdata: ")
         time = _extract_datetime(half1)
@@ -96,7 +96,7 @@ def extract_data(filepath, clip=True):
         times.append(float(time - epoch_start))
         if clip and time > epoch_end:
             break
-    data = np.stack((np.stack(data[True][1:]), np.stack(data[False][1:])))
+    data = np.stack((np.array(data[0][1:]), np.array(data[1][1:])))  # (2, N, 5, 3)
     return np.array(times), data
 
 
@@ -109,9 +109,12 @@ def _rmstr(string, *sstrings):
 
 def pull_annotation(filepath):
     with open(filepath) as handle:
-        config, left, right = _rmstr(handle.read(), " ", "?").split("\n")[:3]
+        config, topstr, botstr = _rmstr(handle.read(), " ", "?").split("\n")[:3]
     cfg = [tuple(c.split("-")) for c in config.split(":")[-1].split(";")]
     cfg = {k.strip(): int(v) for k, v in cfg}
-    left = np.array([labels.index(l) for l in left.split(":")[-1]])
-    right = np.array([labels.index(l) for l in right.split(":")[-1]])
-    return left, right, cfg
+    top = np.array([labels.index(l) for l in topstr.split(":")[-1]])
+    bot = np.array([labels.index(l) for l in botstr.split(":")[-1]])
+    topside = topstr.split(":")[0]
+    assert topside in ("LEFT", "RIGHT")
+    cfg["left"] = topside == "LEFT"
+    return top, bot, cfg
