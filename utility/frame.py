@@ -23,8 +23,8 @@ class DataWrapper:
         atop, abot, acfg = pull_annotation(labpath) if os.path.exists(labpath) else [None, None, {}]
         topleft = acfg.pop("left", False)
         annot = [atop, abot]
-        self._data = {"l": data[topleft], "r": data[~topleft]}
-        self._annot = {"l": annot[topleft], "r": annot[~topleft]}
+        self._data = {"l": data[int(topleft)], "r": data[int(~topleft)]}
+        self._annot = {"l": annot[int(topleft)], "r": annot[int(~topleft)]}
         self.cfg.update(acfg)
 
     @property
@@ -59,7 +59,7 @@ class DataWrapper:
         print("Adjusted config to", self.cfg)
 
     def get_data(self, side, readingframe=0, norm=False):
-        dset = self._data["lr".index(str(side)[0].lower())][:, readingframe]
+        dset = self._data[side[0]][:, readingframe]
         if norm:
             return np.linalg.norm(dset, axis=1)
         return dset
