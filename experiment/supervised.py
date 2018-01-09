@@ -25,10 +25,12 @@ def load(boxer):
         ax, ay, az = x.T
         return as_matrix(np.concatenate((ax.T, ay.T, np.abs(ay.T), az.T), axis=-1))
 
-    lX, lY, tX, tY = load_testsplit_dataset(boxer, as_matrix=False, as_string=True)
-    lX, tX = map(resplit, (lX, tX))
-    return lX, lY, tX, tY
+    def asnorm(x):
+        return np.linalg.norm(x, axis=-1)
 
+    lX, lY, tX, tY = load_testsplit_dataset(boxer, as_matrix=False, as_string=True)
+    lX, tX = map(asnorm, (lX, tX))
+    return lX, lY, tX, tY
 
 # noinspection PyTypeChecker
 def split_eval(model, tX, tY):
@@ -66,7 +68,7 @@ def xperiment_leave_one_out(modeltype, initarg: dict=None, verbosity=1):
         print(f"OVERALL NON-J ACCURACY: {np.mean(nonj):.2%}")
 
 
-LOADERARG = dict(as_matrix=True, as_string=True, optimalish=True, drop_outliers=0.95)
+LOADERARG = dict(as_matrix=False, as_string=True, optimalish=False, drop_outliers=0.95)
 
 
 if __name__ == '__main__':

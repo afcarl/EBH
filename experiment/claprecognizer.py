@@ -9,13 +9,12 @@ def clapsumplot(dw: DataWrapper):
     left, right = dw.get_data("left", norm=False), dw.get_data("right", norm=False)
     left, right = np.abs(left).sum(axis=1) / 3, np.abs(right).sum(axis=1) / 3
     combo = np.maximum(left, right)
-    fig, (tx, mx, bx) = plt.subplots(3, 1, sharex=True, sharey=True)
-    tx.plot(left)
-    tx.grid()
-    mx.plot(right)
-    mx.grid()
-    bx.plot(combo)
-    bx.grid()
+    fig, axarr = plt.subplots(3, 1, sharex=True, sharey=True)
+    for title, data, ax in zip(["left", "right", "combo"], [left, right, combo], axarr):
+        ax.plot(data)
+        ax.grid()
+        ax.set_title(title)
+    ax.plot([40 for _ in range(len(data))], "r--", alpha=.5)
     plt.show()
 
 
