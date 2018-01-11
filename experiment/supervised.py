@@ -23,14 +23,12 @@ def load(boxer):
 
     def resplit(x):
         ax, ay, az = x.T
-        return as_matrix(np.concatenate((ax.T, ay.T, np.abs(ay.T), az.T), axis=-1))
-
-    def asnorm(x):
-        return np.linalg.norm(x, axis=-1)
+        return as_matrix(np.concatenate((ax.T + az.T, np.abs(ay.T)), axis=-1))
 
     lX, lY, tX, tY = load_testsplit_dataset(boxer, as_matrix=False, as_string=True)
-    lX, tX = map(asnorm, (lX, tX))
+    lX, tX = map(resplit, (lX, tX))
     return lX, lY, tX, tY
+
 
 # noinspection PyTypeChecker
 def split_eval(model, tX, tY):
@@ -72,11 +70,11 @@ LOADERARG = dict(as_matrix=False, as_string=True, optimalish=False, drop_outlier
 
 
 if __name__ == '__main__':
-    # xperiment_leave_one_out(ClassifierMock)
+    xperiment_leave_one_out(ClassifierMock)
     # xperiment_leave_one_out(SVC, dict(C=.1337, kernel="poly", degree=2, class_weight="balanced"))  # 73%
     # xperiment_leave_one_out(SVC, dict(C=.1337, kernel="rbf", class_weight="balanced"))  # 66%
     # xperiment_leave_one_out(RandomForestClassifier, dict(class_weight="balanced"))  # 67%
-    xperiment_leave_one_out(KNeighborsClassifier, dict(n_neighbors=5, metric="manhattan"))  # 65%
+    xperiment_leave_one_out(KNeighborsClassifier, dict(n_neighbors=1, metric="manhattan"))  # 65%
     # xperiment_leave_one_out(GaussianNB)  # 63%
     # xperiment_leave_one_out(QDA)  # 68%
     # xperiment_leave_one_out(MLPClassifier, dict(learning_rate_init=0.1))  # 65%

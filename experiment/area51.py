@@ -55,17 +55,25 @@ def compare_parsers(onfile):
     # assert not d.sum()
 
 
-def generate_neighborhood():
+def generate_neighborhood(cfg=None):
     from EBH.utility.assemble import assemble_data
     from EBH.utility.const import projectroot
+    from EBH.utility import axisconfig
+    if cfg is None:
+        cfg = dict(peaksize=20, axisconfig=2)
     X, Y = assemble_data(peaksize=20)
-    x, y, z = X.T
-    X = np.concatenate((x.T, y.T, np.abs(y.T), z.T), axis=-1)
+    X = axisconfig.select[cfg["axisconfig"]]
     X = as_matrix(X)
     Xs, Ys = X.astype("int8").tostring(), Y.astype("int8").tostring()
     Ns = np.array([len(X)], dtype="int16").tostring()
     with open(projectroot + "neighborhood.bin", "wb") as handle:
         handle.write(Ns + Ys + Xs)
+
+
+def generate_peakspace():
+    from EBH.utility.assemble import assemble_data
+    from EBH.utility.const import projectroot
+    X, Y = assemble_data(peaksize=20)
 
 
 if __name__ == '__main__':
